@@ -1,4 +1,4 @@
-﻿# 3dVAE 最终设计方案
+﻿# 3DSceneTokenizer 最终设计方案
 
 ## 1. 目标
 

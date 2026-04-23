@@ -25,13 +25,13 @@
 
 脚本路径：
 
-- `D:\code\3dVAE\scripts\evaluate_instance_tokenizer.py`
+- `.\scripts\evaluate_instance_tokenizer.py`
 
 示例：
 
 ```powershell
-set PYTHONPATH=D:\code\3dVAE\src
-python D:\code\3dVAE\scripts\evaluate_instance_tokenizer.py `
+set PYTHONPATH=%CD%\src
+python .\scripts\evaluate_instance_tokenizer.py `
   --checkpoint D:\path\to\best.pt `
   --ply-dir D:\path\to\eval_ply `
   --out D:\path\to\eval_outputs `
@@ -50,8 +50,8 @@ python D:\code\3dVAE\scripts\evaluate_instance_tokenizer.py `
 
 结果表模板位于：
 
-- `D:\code\3dVAE\templates\evaluation_results_template.md`
-- `D:\code\3dVAE\templates\evaluation_results_template.csv`
+- `.\templates\evaluation_results_template.md`
+- `.\templates\evaluation_results_template.csv`
 
 ## 当前边界
 

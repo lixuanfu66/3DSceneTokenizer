@@ -1,4 +1,4 @@
-# 3dVAE
+# 3DSceneTokenizer
 
 用于自动驾驶场景单帧点云编码实验的最小代码骨架。
 
@@ -18,8 +18,8 @@
 ## 运行单帧 pipeline
 
 ```bash
-set PYTHONPATH=D:\code\3dVAE\src
-python D:\code\3dVAE\scripts\export_scene_tokens.py --ply D:\path\to\frame.ply --out D:\path\to\outputs
+set PYTHONPATH=%CD%\src
+python .\scripts\export_scene_tokens.py --ply D:\path\to\frame.ply --out D:\path\to\outputs
 ```
 
 输出目录会包含：
@@ -35,8 +35,8 @@ python D:\code\3dVAE\scripts\export_scene_tokens.py --ply D:\path\to\frame.ply -
 
 ```bash
 pip install -e .[train]
-set PYTHONPATH=D:\code\3dVAE\src
-python D:\code\3dVAE\scripts\train_instance_tokenizer.py --ply-dir D:\path\to\ply_dir --out D:\path\to\train_outputs
+set PYTHONPATH=%CD%\src
+python .\scripts\train_instance_tokenizer.py --ply-dir D:\path\to\ply_dir --out D:\path\to\train_outputs
 ```
 
 训练输出目录会包含：
