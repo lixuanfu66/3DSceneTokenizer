@@ -12,6 +12,9 @@ class OctreeBuildConfig:
     min_points_per_node: int = 8
     geom_threshold: float = 0.35
     rgb_threshold: float = 0.10
+    extent_weight: float = 0.45
+    occupancy_weight: float = 0.35
+    plane_residual_weight: float = 0.20
     min_depth_by_priority: dict[str, int] = field(
         default_factory=lambda: {"high": 2, "medium": 1, "low": 0}
     )
@@ -52,7 +55,12 @@ class OctreeBuildConfig:
     def min_depth_for(self, semantic_id: int) -> int:
         return int(self.min_depth_by_priority[self.semantic_priority(semantic_id)])
 
-    def split_flag_for(self, semantic_id: int, occupied_extent_xyz: np.ndarray) -> int:
+    def split_flag_for(
+        self,
+        semantic_id: int,
+        occupied_extent_xyz: np.ndarray,
+        axis_std_xyz: np.ndarray | None = None,
+    ) -> int:
         if semantic_id in self.xy_only_semantics:
             return 0b011
         if semantic_id in self.xz_only_semantics:
@@ -65,10 +73,20 @@ class OctreeBuildConfig:
         if max_extent <= 0.0:
             return 0b111
 
-        ratios = extent / max_extent
-        active_axes = [axis for axis, ratio in enumerate(ratios.tolist()) if ratio >= self.planar_axis_ratio_threshold]
-        if not active_axes:
-            active_axes = [int(np.argmax(extent))]
+        extent_ratios = extent / max_extent
+        axis_signal = extent_ratios
+        if axis_std_xyz is not None and axis_std_xyz.shape[0] == 3:
+            axis_std = np.maximum(axis_std_xyz.astype(np.float64, copy=False), 1e-6)
+            max_std = float(np.max(axis_std))
+            if max_std > 0.0:
+                axis_signal = np.maximum(axis_signal, axis_std / max_std)
+
+        weakest_axis = int(np.argmin(axis_signal))
+        weakest_ratio = float(axis_signal[weakest_axis])
+        if weakest_ratio < self.planar_axis_ratio_threshold:
+            active_axes = [axis for axis in range(3) if axis != weakest_axis]
+        else:
+            active_axes = [0, 1, 2]
 
         split_flag = 0
         for axis in active_axes:

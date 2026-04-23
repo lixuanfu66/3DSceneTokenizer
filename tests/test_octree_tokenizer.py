@@ -60,7 +60,6 @@ class OctreeTokenizerTest(unittest.TestCase):
     def test_build_instance_octree_can_degenerate_to_xy_split(self) -> None:
         instance = _make_ground_like_instance()
         config = OctreeBuildConfig(
-            xy_only_semantics={99},
             min_points_per_node=2,
             geom_threshold=0.1,
             rgb_threshold=0.01,
@@ -75,6 +74,21 @@ class OctreeTokenizerTest(unittest.TestCase):
         self.assertLess(root.child_mask, 1 << 4)
         self.assertLessEqual(len(level_one_children), 4)
         self.assertTrue(all(child.child_index in {0, 1, 2, 3} for child in level_one_children))
+
+    def test_planar_instance_split_is_driven_by_geometry_without_semantic_override(self) -> None:
+        instance = _make_ground_like_instance()
+        config = OctreeBuildConfig(
+            min_points_per_node=2,
+            geom_threshold=0.3,
+            rgb_threshold=1.0,
+        )
+
+        nodes = build_instance_octree(instance, config)
+        root = nodes[0]
+
+        self.assertEqual(root.split_flag, 0b011)
+        self.assertEqual(root.structure_state, "split")
+        self.assertGreater(root.geom_score, config.geom_threshold)
 
 
 class _StubNodeCodeProvider:

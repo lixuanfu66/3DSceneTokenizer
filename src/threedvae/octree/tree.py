@@ -28,6 +28,16 @@ class OctreeNode:
     structure_state: str
 
 
+@dataclass(slots=True)
+class NodeComplexity:
+    split_flag: int
+    extent_score: float
+    occupancy_score: float
+    plane_residual_score: float
+    geom_score: float
+    rgb_score: float
+
+
 def build_instance_octree(
     instance: SceneInstance,
     config: OctreeBuildConfig | None = None,
@@ -61,18 +71,22 @@ def build_instance_octree(
         nonlocal next_id
 
         xyz_points = instance.xyz_local[point_indices]
-        occupied_extent = occupied_extent_xyz(xyz_points)
-        geom_score = geometry_complexity_from_extent(occupied_extent, size_local)
-        rgb_score = rgb_variation(instance.rgb[point_indices])
-        split_flag = config.split_flag_for(semantic_id, occupied_extent)
+        complexity = compute_node_complexity(
+            xyz_points=xyz_points,
+            rgb=instance.rgb[point_indices],
+            center_local=center_local,
+            size_local=size_local,
+            semantic_id=semantic_id,
+            config=config,
+        )
         structure_state = _decide_split(
             level=level,
             min_depth=min_depth,
             max_depth=max_depth,
             point_count=int(point_indices.shape[0]),
-            geom_score=geom_score,
-            rgb_score=rgb_score,
-            split_flag=split_flag,
+            geom_score=complexity.geom_score,
+            rgb_score=complexity.rgb_score,
+            split_flag=complexity.split_flag,
             config=config,
         )
 
@@ -85,14 +99,14 @@ def build_instance_octree(
             parent_id=parent_id,
             child_index=child_index,
             path_code=path_code,
-            split_flag=split_flag,
+            split_flag=complexity.split_flag,
             child_mask=0,
             visibility_state=_visibility_state_from_points(int(point_indices.shape[0])),
             center_local=center_local.astype(np.float32, copy=False),
             size_local=size_local.astype(np.float32, copy=False),
             point_indices=point_indices.astype(np.int32, copy=False),
-            geom_score=float(geom_score),
-            rgb_score=float(rgb_score),
+            geom_score=float(complexity.geom_score),
+            rgb_score=float(complexity.rgb_score),
             structure_state=structure_state,
         )
         nodes.append(node)
@@ -100,23 +114,23 @@ def build_instance_octree(
         if structure_state != "split":
             return
 
-        child_size = _child_size(size_local, split_flag)
+        child_size = _child_size(size_local, complexity.split_flag)
         xyz = xyz_points
 
-        child_masks = _child_masks(xyz, center_local, split_flag)
+        child_masks = _child_masks(xyz, center_local, complexity.split_flag)
         materialized_child_mask = 0
         child_entries: list[tuple[int, np.ndarray]] = []
-        for child_index in _child_indices(split_flag):
+        for child_index in _child_indices(complexity.split_flag):
             masked_indices = child_masks[child_index]
             child_indices = point_indices[masked_indices]
             if child_indices.size == 0:
                 continue
-            materialized_child_mask |= 1 << _local_child_slot(split_flag, child_index)
+            materialized_child_mask |= 1 << _local_child_slot(complexity.split_flag, child_index)
             child_entries.append((child_index, child_indices))
 
         node.child_mask = int(materialized_child_mask)
         for child_index, child_indices in child_entries:
-            offset = _child_offset(size_local, child_index, split_flag)
+            offset = _child_offset(size_local, child_index, complexity.split_flag)
             child_path = f"{path_code}.{child_index}" if path_code else str(child_index)
             recurse(
                 center_local=center_local + offset,
@@ -213,6 +227,94 @@ def rgb_variation(rgb: np.ndarray) -> float:
     if rgb.shape[0] == 0:
         return 0.0
     return float(np.mean(np.std(rgb.astype(np.float32) / 255.0, axis=0)))
+
+
+def compute_node_complexity(
+    *,
+    xyz_points: np.ndarray,
+    rgb: np.ndarray,
+    center_local: np.ndarray,
+    size_local: np.ndarray,
+    semantic_id: int,
+    config: OctreeBuildConfig,
+) -> NodeComplexity:
+    occupied_extent = occupied_extent_xyz(xyz_points)
+    axis_std = axis_std_xyz(xyz_points)
+    split_flag = config.split_flag_for(semantic_id, occupied_extent, axis_std)
+    extent_score = extent_complexity(occupied_extent, size_local, split_flag)
+    occupancy_score = occupancy_complexity(xyz_points, center_local, split_flag)
+    plane_residual_score = plane_residual_complexity(xyz_points, size_local)
+    geom_score = float(
+        np.clip(
+            config.extent_weight * extent_score
+            + config.occupancy_weight * occupancy_score
+            + config.plane_residual_weight * plane_residual_score,
+            0.0,
+            1.0,
+        )
+    )
+    return NodeComplexity(
+        split_flag=split_flag,
+        extent_score=float(extent_score),
+        occupancy_score=float(occupancy_score),
+        plane_residual_score=float(plane_residual_score),
+        geom_score=geom_score,
+        rgb_score=rgb_variation(rgb),
+    )
+
+
+def axis_std_xyz(xyz_local: np.ndarray) -> np.ndarray:
+    if xyz_local.shape[0] == 0:
+        return np.zeros((3,), dtype=np.float32)
+    return np.std(xyz_local.astype(np.float32, copy=False), axis=0).astype(np.float32)
+
+
+def extent_complexity(occupied_extent: np.ndarray, size_local: np.ndarray, split_flag: int) -> float:
+    if occupied_extent.shape[0] == 0 or split_flag == 0:
+        return 0.0
+
+    active_axes = [axis for axis in range(3) if split_flag & (1 << axis)]
+    if not active_axes:
+        return 0.0
+
+    occupied = np.maximum(occupied_extent.astype(np.float64, copy=False), 1e-6)
+    size = np.maximum(size_local.astype(np.float64, copy=False), 1e-6)
+    normalized_extent = occupied[active_axes] / size[active_axes]
+    return float(np.clip(np.mean(normalized_extent), 0.0, 1.0))
+
+
+def occupancy_complexity(xyz_local: np.ndarray, center_local: np.ndarray, split_flag: int) -> float:
+    if xyz_local.shape[0] == 0 or split_flag == 0:
+        return 0.0
+
+    child_masks = _child_masks(xyz_local, center_local, split_flag)
+    active_slots = 1 << len([axis for axis in range(3) if split_flag & (1 << axis)])
+    occupied_slots = 0
+    for child_index in _child_indices(split_flag):
+        if np.any(child_masks[child_index]):
+            occupied_slots += 1
+    if active_slots <= 0:
+        return 0.0
+    return float(np.clip(occupied_slots / active_slots, 0.0, 1.0))
+
+
+def plane_residual_complexity(xyz_local: np.ndarray, size_local: np.ndarray) -> float:
+    if xyz_local.shape[0] < 3:
+        return 0.0
+
+    centered = xyz_local.astype(np.float64, copy=False) - np.mean(xyz_local.astype(np.float64, copy=False), axis=0, keepdims=True)
+    try:
+        _, singular_values, vh = np.linalg.svd(centered, full_matrices=False)
+    except np.linalg.LinAlgError:
+        return 0.0
+
+    if vh.shape[0] < 3:
+        return 0.0
+    normal = vh[-1]
+    distances = centered @ normal
+    rmse = float(np.sqrt(np.mean(np.square(distances))))
+    normalizer = max(float(np.linalg.norm(size_local.astype(np.float64, copy=False))), 1e-6)
+    return float(np.clip(rmse / normalizer, 0.0, 1.0))
 
 
 def _decide_split(

@@ -1,16 +1,16 @@
-# 3dVAE 最终设计方案
+﻿# 3dVAE 最终设计方案
 
 ## 1. 目标
 
-本项目的目标是为自动驾驶场景构建一种面向 VLA / LLM 的 3D 场景编码方案。该方案应同时满足以下要求：
+本项目的目标是为自动驾驶场景构建一套面向 `VLA / LLM` 的 3D 场景编码方案。该方案需要同时满足：
 
-- 能表达自车坐标系下的整场景空间关系
-- 能表达实例级几何与纹理信息
-- 支持结构化压缩，控制 token 长度
-- 对同类实例在不同场景位置下保持较稳定的局部表示
-- 为后续时序扩展、生成任务和下游理解任务预留接口
+- 表达自车坐标系下的场景空间关系
+- 表达实例级几何与纹理信息
+- 支持结构化压缩，尽量缩短 token 序列
+- 让同类实例在不同场景位置下保持相对稳定的局部表示
+- 为未来的时序扩展、生成任务和下游理解任务预留接口
 
-当前默认实现先聚焦单帧路径，优先把单帧场景编码、实例编码、训练和评估闭环跑通。
+当前默认实现先聚焦单帧路径，优先把单帧场景编码、实例编码、训练和评估链路跑通。
 
 ## 2. 输入定义
 
@@ -54,20 +54,20 @@
 
 ### 3.3 实例局部坐标系
 
-每个实例点云会变换到实例局部坐标系下编码。实例编码不做尺寸归一化，保留物理世界真实尺度。
+每个实例点云会变换到实例局部坐标系下编码。实例编码不做尺寸归一化，保持真实物理尺度。
 
 ## 4. 场景表示
 
-整场景采用两层表示。
+整体场景采用两层表示。
 
 ### 4.1 Scene Layer
 
 `scene layer` 负责表达实例在自车坐标系下的全局信息，包括：
 
-- 实例类别 `semantic_id`
-- 实例位置 `center_xyz`
-- 实例朝向 `yaw`
-- 实例尺度 `box_size_xyz`
+- `semantic_id`
+- `center_xyz`
+- `yaw`
+- `box_size_xyz`
 
 ### 4.2 Instance Layer
 
@@ -78,13 +78,13 @@
 - 纹理编码
 - 学习式节点编码
 
-当前单帧实现中，时序信息暂不进入编码主链路。
+当前单帧实现中，时序信息暂不进入主编码链路。
 
 ## 5. 实例层结构：统一自适应树
 
 ### 5.1 基本原则
 
-实例层统一采用一种“带 `split_flag` 的自适应树”表达，而不是维护完全独立的 `Octree` 与 `Quadtree` 两套结构。
+实例层统一采用一种“带 `split_flag` 的自适应树”，而不是维护完全独立的 `Octree` 和 `Quadtree` 两套结构。
 
 ### 5.2 split_flag
 
@@ -97,7 +97,7 @@
 因此：
 
 - `0b111`：标准 3D 切分
-- `0b011`：仅沿 `XY` 切分，适合地面类
+- `0b011`：仅沿 `XY` 切分，适合地面
 - `0b101`：仅沿 `XZ` 切分
 - `0b110`：仅沿 `YZ` 切分
 
@@ -107,22 +107,101 @@
 
 `child_mask` 的含义是：
 
-- 仅表达结构拓扑
+- 只表达结构拓扑
 - 不直接表达 free-space
 - 不直接表达未观测
-- 不直接表达物理为空
+- 不直接表达物理上为空
 
-也就是说，`child_mask` 的 0 bit 只表示该 child slot 当前没有被展开成独立节点。
+也就是说，`child_mask` 的 `0 bit` 只表示该 child slot 当前没有被展开成独立节点。
 
-### 5.4 切分顺序
+## 6. 节点是否继续切分：最终准则
 
-当前切分决策采用规则链，而不是加权总分：
+这是当前方案中最关键的更新之一。节点切分不再只依赖简单的 `occupied_extent / node_size`，而是升级为三段式决策：
 
-1. 语义优先级
-2. 几何复杂度
-3. RGB 变化
+1. `hard gating`
+2. `complexity scoring`
+3. `axis selection`
 
-### 5.5 节点展开顺序
+### 6.1 Hard Gating
+
+先用硬约束过滤掉无意义切分：
+
+- 达到 `max_depth` 时停止
+- 点数小于 `min_points_per_node` 时停止
+- 语义优先级决定 `min_depth`
+- 语义优先级和距离共同决定 `max_depth`
+
+这一步负责给不同类别和不同距离分配 token 预算。
+
+### 6.2 Complexity Scoring
+
+通过 gating 后，再计算局部复杂度。当前最终实现中，局部几何复杂度由三部分组成：
+
+- `extent_score`
+- `occupancy_score`
+- `plane_residual_score`
+
+#### extent_score
+
+活动切分轴上的占据范围占节点尺寸的比例。它衡量该节点在当前可切分方向上是否“铺满”了足够大的空间。
+
+#### occupancy_score
+
+候选子槽位中被点云实际占据的比例。它衡量局部分布是否已经足够复杂，值得继续分配更多节点。
+
+#### plane_residual_score
+
+点到最佳拟合平面的归一化残差。它衡量该节点是否只是简单平面，还是具有更强的 3D 几何起伏。
+
+#### 当前几何复杂度组合
+
+当前实现采用加权组合：
+
+- `extent_weight = 0.45`
+- `occupancy_weight = 0.35`
+- `plane_residual_weight = 0.20`
+
+即：
+
+`geom_score = 0.45 * extent_score + 0.35 * occupancy_score + 0.20 * plane_residual_score`
+
+此外还保留：
+
+- `rgb_score`
+
+用于在几何复杂度不足时补充外观驱动的细化能力。
+
+### 6.3 Axis Selection
+
+是否切分与沿哪些轴切分是一起决定的。当前 `split_flag` 的选择依据为：
+
+- 语义显式覆盖
+- `occupied_extent`
+- `axis_std`
+
+具体规则是：
+
+- 如果语义被明确指定为 `XY / XZ / YZ`，优先使用语义覆盖
+- 否则根据局部点云在三个轴上的 `extent` 与 `std` 估计各向异性
+- 若最弱轴信号显著低于阈值，则退化为两轴切分
+- 若三个方向都足够显著，则采用 `XYZ`
+
+这使得：
+
+- 体状实例更容易走 `XYZ`
+- 近平面实例即使没有语义强制覆盖，也能自动退化到 `XY / XZ / YZ`
+
+### 6.4 当前切分顺序
+
+当前最终规则可以概括为：
+
+1. 先由语义和距离决定深度预算
+2. 再由局部几何复杂度和 RGB 复杂度决定值不值得继续切
+3. 最后由局部各向异性决定沿哪些轴切
+
+这是一个 `budget-aware + error-aware + anisotropy-aware` 的切分准则，借鉴了 OAT 的“局部复杂度驱动 token 分配”思想，但适配了自动驾驶 partial RGB 点云和统一树结构。
+
+## 7. 节点展开顺序
 
 节点序列化采用：
 
@@ -132,9 +211,9 @@ child slot 顺序采用：
 
 - `active_axes_binary`
 
-这两条约定决定了 compact token 在不依赖 `path_code` 的情况下仍可恢复树拓扑。
+这两条约定保证 compact token 在不依赖 `path_code` 的情况下仍可恢复树拓扑。
 
-## 6. 节点编码
+## 8. 节点编码
 
 每个节点当前支持三类信息：
 
@@ -142,12 +221,12 @@ child slot 顺序采用：
 - 规则式编码：`geom_code + rgb_code`
 - 学习式编码：`learned_code`
 
-### 6.1 规则式编码
+### 8.1 规则式编码
 
 - `geom_code`：基于节点密度、几何复杂度、层级等规则量化得到
 - `rgb_code`：基于节点 RGB 均值与方差量化得到
 
-### 6.2 学习式编码
+### 8.2 学习式编码
 
 学习式节点编码由节点级 `VQ-VAE` 产生，对外表现为：
 
@@ -155,9 +234,9 @@ child slot 顺序采用：
 
 当前系统允许规则式编码和学习式编码并行输出，便于调试和对比。
 
-## 7. 学习式实例编码器
+## 9. 学习式实例编码器
 
-### 7.1 总体结构
+### 9.1 总体结构
 
 当前实例编码器采用节点级 `PointNet + VQ + Decoder` 结构。
 
@@ -169,9 +248,9 @@ child slot 顺序采用：
 - `PointCloudDecoder`
 - `UDFDecoder`
 
-### 7.2 输入形式
+### 9.2 输入形式
 
-训练时支持两种 sample unit：
+训练时支持两种 `sample unit`：
 
 - `instance`
 - `node`
@@ -180,9 +259,9 @@ child slot 顺序采用：
 
 - `node`
 
-也就是以统一树的节点作为训练样本。
+即以统一树的节点作为训练样本。
 
-### 7.3 训练目标
+### 9.3 训练目标
 
 当前训练目标为：
 
@@ -191,11 +270,11 @@ child slot 顺序采用：
 - `vq loss`
 - `udf loss`
 
-### 7.4 UDF 监督
+### 9.4 UDF 监督
 
 当前 `UDF` 监督采用基于 partial 点云的 observed UDF baseline：
 
-- 在节点局部 bbox 中采样查询点
+- 在节点局部 `bbox` 中采样查询点
 - 用查询点到局部点云最近邻的距离作为监督值
 - 对距离进行截断
 
@@ -205,11 +284,11 @@ child slot 顺序采用：
 - 不依赖传感器射线
 - 适合当前 partial point cloud 条件
 
-## 8. Token 导出层
+## 10. Token 导出层
 
 当前 pipeline 同时导出多层表示，以兼顾调试和下游消费。
 
-### 8.1 完整调试版
+### 10.1 完整调试版
 
 文件：
 
@@ -221,7 +300,7 @@ child slot 顺序采用：
 - 保留 `parent_id / child_index / path_code`
 - 适合人工排查和树结构核查
 
-### 8.2 紧凑结构版 v1
+### 10.2 紧凑结构版 v1
 
 文件：
 
@@ -232,7 +311,7 @@ child slot 顺序采用：
 - 去掉调试字段
 - 保留结构恢复所需核心字段
 
-### 8.3 线性序列版 v1
+### 10.3 线性序列版 v1
 
 文件：
 
@@ -248,7 +327,7 @@ child slot 顺序采用：
   - `INSTANCE_END`
 - `SCENE_END`
 
-### 8.4 紧凑结构版 v2
+### 10.4 紧凑结构版 v2
 
 文件：
 
@@ -258,7 +337,7 @@ child slot 顺序采用：
 
 #### v2 的关键变化
 
-- 用 `INSTANCE_HEADER` 的信息取代显式 `POSE + INSTANCE_START` 拆分
+- 用 `INSTANCE_HEADER` 取代显式 `POSE + INSTANCE_START` 拆分
 - 节点 token 不再显式保留：
   - `level`
   - `num_points`
@@ -282,7 +361,7 @@ child slot 顺序采用：
 - `yaw_q`：朝向量化结果
 - `box_size_xyz_q`：尺寸量化结果
 
-### 8.5 LLM 线性序列版 v2
+### 10.5 LLM 线性序列版 v2
 
 文件：
 
@@ -297,15 +376,13 @@ child slot 顺序采用：
 - 每个实例对应多个 `INSTANCE_NODE_V2`
 - `SCENE_END`
 
-其中：
-
-`INSTANCE_NODE_V2` 仅保留：
+其中 `INSTANCE_NODE_V2` 仅保留：
 
 - `split_flag`
 - `child_mask`
 - `main_code`
 
-### 8.6 默认推荐出口
+### 10.6 默认推荐出口
 
 当前 pipeline 还会生成：
 
@@ -315,12 +392,12 @@ child slot 顺序采用：
 
 当前默认约定：
 
-- `scene_tokens_compact_latest.json` 指向 `v2` compact
-- `scene_tokens_llm_sequence_latest.json` 指向 `v2` LLM sequence
+- `scene_tokens_compact_latest.json` 指向 `v2 compact`
+- `scene_tokens_llm_sequence_latest.json` 指向 `v2 LLM sequence`
 
 `scene_token_bundle.json` 记录推荐读取的文件名。
 
-## 9. 调试输出
+## 11. 调试输出
 
 为了检查树结构与实例表达，当前 pipeline 还会导出以下中间结果：
 
@@ -328,16 +405,16 @@ child slot 顺序采用：
 - `instance_<id>_bbox.json`
 - `instance_<id>_octree_nodes.jsonl`
 
-其中场景 bbox 与节点 bbox 采用统一几何表示：
+其中场景 bbox 和节点 bbox 采用统一几何表示：
 
 - `8` 个顶点
 - `6` 个四边形面
 
-## 10. 评估方案
+## 12. 评估方案
 
-当前评估体系已实现，并配套评估脚本。
+当前评估体系已经实现，并配套评估脚本。
 
-### 10.1 已实现的指标
+### 12.1 已实现的指标
 
 #### 重建指标
 
@@ -361,7 +438,7 @@ child slot 顺序采用：
 - `latent_tokens_per_sample`
 - `points_per_token_ratio`
 
-### 10.2 评估脚本
+### 12.2 评估脚本
 
 脚本：
 
@@ -373,44 +450,44 @@ child slot 顺序采用：
 - `evaluation_summary.md`
 - `evaluation_metrics.csv`
 
-### 10.3 模板
+### 12.3 模板
 
 结果模板：
 
 - `templates/evaluation_results_template.md`
 - `templates/evaluation_results_template.csv`
 
-## 11. 当前默认推荐使用方式
+## 13. 当前默认推荐使用方式
 
-### 11.1 训练
+### 13.1 训练
 
 默认推荐：
 
 - 使用 `node` 模式训练节点级 tokenizer
 - 使用当前 `UDF` 辅助监督
 
-### 11.2 导出
+### 13.2 导出
 
 默认推荐：
 
 - 调试使用：`scene_tokens.json`
 - 下游读取使用：`scene_tokens_llm_sequence_latest.json`
 
-### 11.3 评估
+### 13.3 评估
 
 默认推荐：
 
 - 用 `scripts/evaluate_instance_tokenizer.py` 统一导出实验结果
 - 所有实验统一保存 JSON、Markdown 和 CSV 三份报告
 
-## 12. 方案边界
+## 14. 方案边界
 
 当前最终方案明确聚焦于：
 
 - 单帧场景
 - partial RGB point cloud
 - 节点级统一树编码
-- 节点级 VQ-VAE
+- 节点级 `VQ-VAE`
 - 面向 LLM 的压缩结构序列
 
 以下内容不属于当前最终方案的已完成部分：
