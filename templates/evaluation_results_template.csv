@@ -1,0 +1,14 @@
+section,metric,value,notes
+reconstruction,xyz_mse,,点坐标重建误差
+reconstruction,rgb_mse,,颜色重建误差
+reconstruction,chamfer_l2,,点云双向最近邻误差
+reconstruction,udf_smooth_l1,,节点级截断UDF误差
+codebook,code_count,,码本总大小
+codebook,used_code_count,,实际使用的码数量
+codebook,usage_rate,,使用率
+codebook,entropy_bits,,码分布熵
+codebook,perplexity,,感知有效码数量
+compression,sample_count,,评估样本数
+compression,avg_input_points,,平均输入点数
+compression,latent_tokens_per_sample,,每样本latent token数
+compression,points_per_token_ratio,,点数/Token压缩比
