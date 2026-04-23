@@ -84,6 +84,7 @@ def build_instance_octree(
             min_depth=min_depth,
             max_depth=max_depth,
             point_count=int(point_indices.shape[0]),
+            semantic_id=semantic_id,
             geom_score=complexity.geom_score,
             rgb_score=complexity.rgb_score,
             split_flag=complexity.split_flag,
@@ -323,11 +324,13 @@ def _decide_split(
     min_depth: int,
     max_depth: int,
     point_count: int,
+    semantic_id: int,
     geom_score: float,
     rgb_score: float,
     split_flag: int,
     config: OctreeBuildConfig,
 ) -> str:
+    geom_threshold, rgb_threshold = config.split_thresholds_for(semantic_id)
     if point_count == 0:
         return "leaf"
     if split_flag == 0:
@@ -338,9 +341,9 @@ def _decide_split(
         return "leaf"
     if level < min_depth:
         return "split"
-    if geom_score > config.geom_threshold:
+    if geom_score > geom_threshold:
         return "split"
-    if rgb_score > config.rgb_threshold:
+    if rgb_score > rgb_threshold:
         return "split"
     return "leaf"
 

@@ -201,7 +201,70 @@
 
 这是一个 `budget-aware + error-aware + anisotropy-aware` 的切分准则，借鉴了 OAT 的“局部复杂度驱动 token 分配”思想，但适配了自动驾驶 partial RGB 点云和统一树结构。
 
-## 7. 节点展开顺序
+## 7. 语义策略表：深度与 split_flag 的统一配置
+
+当前方案进一步把 `depth` 和 `split_flag` 合并成了一张统一的语义策略表，而不是分别由优先级集合和单独的切分规则控制。
+
+### 7.1 统一策略对象
+
+每个语义类对应一个 `SemanticOctreePolicy`，至少包含：
+
+- `tag_name`
+- `min_depth`
+- `max_depth_by_distance`
+- `preferred_split_flag`
+- `lock_preferred_split`
+- `priority`
+
+### 7.2 与距离的融合方式
+
+运行时先根据实例中心点计算距离段：
+
+- `near`
+- `mid`
+- `far`
+
+再按 `semantic_id` 查询策略表，从中读取：
+
+- `min_depth`
+- `max_depth_by_distance[distance_bin]`
+- `preferred_split_flag`
+
+因此当前最大深度的确定方式是：
+
+- 先按语义查策略
+- 再按距离段取该语义在对应距离下的 `max_depth`
+
+### 7.3 split_flag 的使用方式
+
+`split_flag` 不再只由几何规则决定，而是遵循：
+
+- 语义先验
+- 几何统计
+- 可选锁定
+
+具体逻辑：
+
+- 若 `lock_preferred_split=true`，直接使用语义表中的 `preferred_split_flag`
+- 若 `lock_preferred_split=false`，则用语义先验和局部几何推断融合得到最终 `split_flag`
+
+### 7.4 当前默认 CARLA 语义策略
+
+当前代码中已内置一份基于 CARLA 语义表的默认策略：
+
+- 地面相关：
+  - `Roads / SideWalks / RoadLine / Ground` 默认 `XY`
+- 体状目标：
+  - `Car / Pedestrian / Bicycle / TrafficLight` 等默认 `XYZ`
+- 背景结构：
+  - `Building / Wall / Fence / GuardRail` 当前先保守设为 `XYZ`，再允许几何退化
+
+当前实现提供：
+
+- `build_default_carla_semantic_policies()`
+- `OctreeBuildConfig.with_default_carla_semantics()`
+
+## 8. 节点展开顺序
 
 节点序列化采用：
 
@@ -213,7 +276,7 @@ child slot 顺序采用：
 
 这两条约定保证 compact token 在不依赖 `path_code` 的情况下仍可恢复树拓扑。
 
-## 8. 节点编码
+## 9. 节点编码
 
 每个节点当前支持三类信息：
 
@@ -234,7 +297,7 @@ child slot 顺序采用：
 
 当前系统允许规则式编码和学习式编码并行输出，便于调试和对比。
 
-## 9. 学习式实例编码器
+## 10. 学习式实例编码器
 
 ### 9.1 总体结构
 
@@ -284,7 +347,7 @@ child slot 顺序采用：
 - 不依赖传感器射线
 - 适合当前 partial point cloud 条件
 
-## 10. Token 导出层
+## 11. Token 导出层
 
 当前 pipeline 同时导出多层表示，以兼顾调试和下游消费。
 
@@ -397,7 +460,7 @@ child slot 顺序采用：
 
 `scene_token_bundle.json` 记录推荐读取的文件名。
 
-## 11. 调试输出
+## 12. 调试输出
 
 为了检查树结构与实例表达，当前 pipeline 还会导出以下中间结果：
 
@@ -410,7 +473,7 @@ child slot 顺序采用：
 - `8` 个顶点
 - `6` 个四边形面
 
-## 12. 评估方案
+## 13. 评估方案
 
 当前评估体系已经实现，并配套评估脚本。
 
@@ -457,7 +520,7 @@ child slot 顺序采用：
 - `templates/evaluation_results_template.md`
 - `templates/evaluation_results_template.csv`
 
-## 13. 当前默认推荐使用方式
+## 14. 当前默认推荐使用方式
 
 ### 13.1 训练
 
@@ -480,7 +543,7 @@ child slot 顺序采用：
 - 用 `scripts/evaluate_instance_tokenizer.py` 统一导出实验结果
 - 所有实验统一保存 JSON、Markdown 和 CSV 三份报告
 
-## 14. 方案边界
+## 15. 方案边界
 
 当前最终方案明确聚焦于：
 

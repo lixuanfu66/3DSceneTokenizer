@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 
 from threedvae.data.schema import GroundAlignedOBB, Pose3DYaw, SceneInstance
-from threedvae.octree.split_policy import OctreeBuildConfig
+from threedvae.octree.split_policy import OctreeBuildConfig, SemanticOctreePolicy
 from threedvae.octree.tree import build_instance_octree, build_octree_debug_records
 from threedvae.tokenizer.instance_encoder import encode_instance
 
@@ -89,6 +89,46 @@ class OctreeTokenizerTest(unittest.TestCase):
         self.assertEqual(root.split_flag, 0b011)
         self.assertEqual(root.structure_state, "split")
         self.assertGreater(root.geom_score, config.geom_threshold)
+
+    def test_semantic_policy_can_control_depth_by_distance(self) -> None:
+        near_instance = _make_vehicle_instance(center_xyz=np.asarray([10.0, 0.0, 0.0], dtype=np.float32))
+        far_instance = _make_vehicle_instance(center_xyz=np.asarray([50.0, 0.0, 0.0], dtype=np.float32))
+        config = OctreeBuildConfig(
+            semantic_policies={
+                14: SemanticOctreePolicy(
+                    tag_name="Car",
+                    min_depth=1,
+                    max_depth_by_distance={"near": 4, "mid": 3, "far": 1},
+                    preferred_split_flag=0b111,
+                    lock_preferred_split=False,
+                    priority="high",
+                )
+            }
+        )
+
+        self.assertEqual(config.max_depth_for(14, near_instance.pose_ego.center_xyz), 4)
+        self.assertEqual(config.max_depth_for(14, far_instance.pose_ego.center_xyz), 1)
+
+    def test_semantic_policy_can_lock_preferred_split_flag(self) -> None:
+        instance = _make_ground_like_instance()
+        config = OctreeBuildConfig(
+            semantic_policies={
+                99: SemanticOctreePolicy(
+                    tag_name="GroundLike",
+                    min_depth=1,
+                    max_depth_by_distance={"near": 3, "mid": 2, "far": 1},
+                    preferred_split_flag=0b011,
+                    lock_preferred_split=True,
+                    priority="medium",
+                )
+            },
+            min_points_per_node=2,
+            geom_threshold=0.1,
+            rgb_threshold=0.01,
+        )
+
+        nodes = build_instance_octree(instance, config)
+        self.assertEqual(nodes[0].split_flag, 0b011)
 
 
 class _StubNodeCodeProvider:
@@ -193,4 +233,38 @@ def _make_ground_like_instance() -> SceneInstance:
         pose_ego=Pose3DYaw(center_xyz=bbox.center_xyz.copy(), yaw=bbox.yaw),
         xyz_local=grid.copy(),
         num_points=grid.shape[0],
+    )
+
+
+def _make_vehicle_instance(center_xyz: np.ndarray) -> SceneInstance:
+    local = np.asarray(
+        [
+            [-1.0, -0.8, -0.6],
+            [1.0, -0.8, -0.6],
+            [1.0, 0.8, -0.6],
+            [-1.0, 0.8, -0.6],
+            [-1.0, -0.8, 0.6],
+            [1.0, -0.8, 0.6],
+            [1.0, 0.8, 0.6],
+            [-1.0, 0.8, 0.6],
+            [0.0, 0.0, 0.0],
+        ],
+        dtype=np.float32,
+    )
+    rgb = np.full((local.shape[0], 3), 180, dtype=np.uint8)
+    bbox = GroundAlignedOBB(
+        center_xyz=center_xyz.astype(np.float32, copy=True),
+        size_xyz=np.asarray([2.0, 1.6, 1.2], dtype=np.float32),
+        yaw=0.0,
+    )
+    return SceneInstance(
+        instance_id=14,
+        semantic_id=14,
+        category_name="car",
+        xyz_ego=local + center_xyz.astype(np.float32, copy=False),
+        rgb=rgb,
+        bbox_ego=bbox,
+        pose_ego=Pose3DYaw(center_xyz=bbox.center_xyz.copy(), yaw=bbox.yaw),
+        xyz_local=local.copy(),
+        num_points=local.shape[0],
     )
