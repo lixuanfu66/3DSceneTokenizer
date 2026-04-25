@@ -35,7 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--udf-truncation", type=float, default=0.25, help="Truncation distance for node-level UDF supervision.")
     parser.add_argument("--epochs", type=int, default=10, help="Training epochs.")
     parser.add_argument("--batch-size", type=int, default=16, help="Training batch size.")
-    parser.add_argument("--learning-rate", type=float, default=1e-3, help="Learning rate.")
+    parser.add_argument("--learning-rate", type=float, default=3e-4, help="Learning rate.")
     parser.add_argument("--weight-decay", type=float, default=1e-4, help="AdamW weight decay.")
     parser.add_argument("--hidden-dim", type=int, default=128, help="Hidden width for encoder/decoder.")
     parser.add_argument("--latent-dim", type=int, default=64, help="Latent dimension before quantization.")
@@ -48,6 +48,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-workers", type=int, default=0, help="DataLoader worker count.")
     parser.add_argument("--checkpoint-every", type=int, default=1, help="Save epoch checkpoint every N epochs.")
     parser.add_argument("--udf-weight", type=float, default=0.5, help="Loss weight for node UDF supervision.")
+    parser.add_argument("--grad-clip-norm", type=float, default=1.0, help="Gradient clipping norm. Set <=0 to disable.")
     parser.add_argument("--include-leaf-only", action="store_true", help="When using node mode, only train on leaf nodes.")
     parser.add_argument("--high-priority-semantics", default="", help="Comma-separated semantic ids forced to XYZ/priority-aware high-detail splitting.")
     parser.add_argument("--xy-only-semantics", default="", help="Comma-separated semantic ids forced to XY split.")
@@ -129,6 +130,7 @@ def main() -> None:
             weight_decay=args.weight_decay,
             device=args.device,
             udf_weight=args.udf_weight,
+            grad_clip_norm=args.grad_clip_norm if args.grad_clip_norm > 0.0 else None,
             num_workers=args.num_workers,
             checkpoint_every=args.checkpoint_every,
         ),

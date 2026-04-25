@@ -14,13 +14,14 @@ from threedvae.utils.torch_compat import HAS_TORCH, DataLoader, require_torch, t
 class TrainerConfig:
     epochs: int = 10
     batch_size: int = 16
-    learning_rate: float = 1e-3
+    learning_rate: float = 3e-4
     weight_decay: float = 1e-4
     device: str = "cpu"
     xyz_weight: float = 1.0
     rgb_weight: float = 0.25
     vq_weight: float = 1.0
     udf_weight: float = 0.5
+    grad_clip_norm: float | None = 1.0
     num_workers: int = 0
     log_every: int = 10
     checkpoint_every: int = 1
@@ -130,7 +131,17 @@ class InstanceTokenizerTrainer:
                 vq_weight=self.config.vq_weight,
                 udf_weight=self.config.udf_weight,
             )
+            if not torch.isfinite(losses.total_loss):
+                raise RuntimeError(
+                    "Encountered non-finite training loss. "
+                    f"xyz={float(losses.xyz_loss.detach().cpu()):.6f}, "
+                    f"rgb={float(losses.rgb_loss.detach().cpu()):.6f}, "
+                    f"vq={float(losses.vq_loss.detach().cpu()):.6f}, "
+                    f"udf={float(losses.udf_loss.detach().cpu()):.6f}"
+                )
             losses.total_loss.backward()
+            if self.config.grad_clip_norm is not None and self.config.grad_clip_norm > 0.0:
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_clip_norm)
             self.optimizer.step()
 
             total["total_loss"] += float(losses.total_loss.detach().cpu())
