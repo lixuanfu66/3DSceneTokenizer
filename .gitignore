@@ -20,6 +20,7 @@ dist/
 .tmp/
 .codex/
 /data/
+/outputs/
 
 findings.md
 progress.md
