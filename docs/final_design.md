@@ -505,7 +505,8 @@ child slot 顺序采用：
 
 脚本：
 
-- `scripts/evaluate_instance_tokenizer.py`
+- `scripts/train_octree_node_vae.py`
+- `scripts/train_octree_node_vqvae.py`
 
 输出：
 
@@ -540,7 +541,7 @@ child slot 顺序采用：
 
 默认推荐：
 
-- 用 `scripts/evaluate_instance_tokenizer.py` 统一导出实验结果
+- 用 `scripts/train_octree_node_vae.py` 与 `scripts/train_octree_node_vqvae.py` 输出训练历史和 checkpoint
 - 所有实验统一保存 JSON、Markdown 和 CSV 三份报告
 
 ## 15. 方案边界

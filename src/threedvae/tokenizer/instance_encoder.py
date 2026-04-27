@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Protocol
 
 from threedvae.data.schema import InstanceNodeToken, InstanceTokenBlock, SceneInstance
 from threedvae.octree.split_policy import OctreeBuildConfig
 from threedvae.octree.tree import OctreeNode, build_instance_octree, build_octree_debug_records
-from threedvae.tokenizer.learned_encoder import NodeCodeProvider
 from threedvae.tokenizer.quantizer import quantize_geometry, quantize_rgb
+
+
+class NodeCodeProvider(Protocol):
+    def encode_node(self, xyz_local, rgb) -> int:
+        ...
 
 
 @dataclass(slots=True)
@@ -31,7 +36,17 @@ def encode_instance(
         node_xyz_local = instance.xyz_local[node.point_indices]
         learned_code = None
         if node_code_provider is not None:
-            learned_code = int(node_code_provider.encode_node(node_xyz_local, node_rgb))
+            if hasattr(node_code_provider, "encode_octree_node"):
+                learned_code = int(
+                    node_code_provider.encode_octree_node(
+                        instance=instance,
+                        node=node,
+                        xyz_local=node_xyz_local,
+                        rgb=node_rgb,
+                    )
+                )
+            else:
+                learned_code = int(node_code_provider.encode_node(node_xyz_local, node_rgb))
         tokens.append(
             InstanceNodeToken(
                 node_id=node.node_id,

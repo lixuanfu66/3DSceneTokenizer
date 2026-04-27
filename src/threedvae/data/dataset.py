@@ -35,6 +35,8 @@ class TreeNodePointCloudSample:
     path_code: str
     level: int
     split_flag: int
+    center_local: np.ndarray
+    size_local: np.ndarray
     xyz_local: np.ndarray
     rgb: np.ndarray
 
@@ -97,12 +99,18 @@ class TreeNodePointCloudDataset:
         points_per_node: int = 128,
         queries_per_node: int = 64,
         udf_truncation: float = 0.25,
+        near_surface_threshold: float | None = None,
         seed: int = 0,
     ) -> None:
         self.samples = samples
         self.points_per_node = int(points_per_node)
         self.queries_per_node = int(queries_per_node)
         self.udf_truncation = float(udf_truncation)
+        self.near_surface_threshold = (
+            min(0.03, 0.2 * self.udf_truncation)
+            if near_surface_threshold is None
+            else float(near_surface_threshold)
+        )
         self.seed = int(seed)
 
     def __len__(self) -> int:
@@ -122,6 +130,7 @@ class TreeNodePointCloudDataset:
             truncation_distance=self.udf_truncation,
             seed=self.seed + 100_000 + index,
         )
+        query_occ = (query_udf <= self.near_surface_threshold).astype(np.float32)
 
         features = np.concatenate([xyz, rgb.astype(np.float32) / 255.0], axis=1).astype(np.float32)
         return {
@@ -136,11 +145,17 @@ class TreeNodePointCloudDataset:
             "path_code": sample.path_code,
             "level": sample.level,
             "split_flag": sample.split_flag,
+            "node_center_local": sample.center_local.astype(np.float32, copy=False),
+            "node_size_local": sample.size_local.astype(np.float32, copy=False),
             "xyz": xyz.astype(np.float32),
             "rgb": rgb.astype(np.float32) / 255.0,
             "points": features,
             "query_xyz": query_xyz.astype(np.float32),
             "query_udf": query_udf.astype(np.float32),
+            "query_occ": query_occ.astype(np.float32),
+            "query_rgb_xyz": xyz.astype(np.float32),
+            "query_rgb": rgb.astype(np.float32) / 255.0,
+            "query_rgb_mask": np.ones((xyz.shape[0], 1), dtype=np.float32),
         }
 
     def torch_collate(self, batch: list[dict[str, Any]]) -> dict[str, Any]:
@@ -157,11 +172,17 @@ class TreeNodePointCloudDataset:
             "path_code": [item["path_code"] for item in batch],
             "level": torch.as_tensor([item["level"] for item in batch], dtype=torch.int64),
             "split_flag": torch.as_tensor([item["split_flag"] for item in batch], dtype=torch.int64),
+            "node_center_local": torch.as_tensor(np.stack([item["node_center_local"] for item in batch], axis=0), dtype=torch.float32),
+            "node_size_local": torch.as_tensor(np.stack([item["node_size_local"] for item in batch], axis=0), dtype=torch.float32),
             "xyz": torch.as_tensor(np.stack([item["xyz"] for item in batch], axis=0), dtype=torch.float32),
             "rgb": torch.as_tensor(np.stack([item["rgb"] for item in batch], axis=0), dtype=torch.float32),
             "points": torch.as_tensor(np.stack([item["points"] for item in batch], axis=0), dtype=torch.float32),
             "query_xyz": torch.as_tensor(np.stack([item["query_xyz"] for item in batch], axis=0), dtype=torch.float32),
             "query_udf": torch.as_tensor(np.stack([item["query_udf"] for item in batch], axis=0), dtype=torch.float32),
+            "query_occ": torch.as_tensor(np.stack([item["query_occ"] for item in batch], axis=0), dtype=torch.float32),
+            "query_rgb_xyz": torch.as_tensor(np.stack([item["query_rgb_xyz"] for item in batch], axis=0), dtype=torch.float32),
+            "query_rgb": torch.as_tensor(np.stack([item["query_rgb"] for item in batch], axis=0), dtype=torch.float32),
+            "query_rgb_mask": torch.as_tensor(np.stack([item["query_rgb_mask"] for item in batch], axis=0), dtype=torch.float32),
         }
 
 
@@ -223,6 +244,8 @@ def collect_node_samples_from_ply_paths(
                         path_code=node.path_code,
                         level=node.level,
                         split_flag=node.split_flag,
+                        center_local=node.center_local.astype(np.float32, copy=False),
+                        size_local=node.size_local.astype(np.float32, copy=False),
                         xyz_local=xyz_local.astype(np.float32, copy=False),
                         rgb=rgb.astype(np.uint8, copy=False),
                     )
@@ -257,6 +280,7 @@ def build_node_dataset_from_ply_dir(
     points_per_node: int = 128,
     queries_per_node: int = 64,
     udf_truncation: float = 0.25,
+    near_surface_threshold: float | None = None,
     seed: int = 0,
     octree_config: OctreeBuildConfig | None = None,
     include_leaf_only: bool = False,
@@ -272,6 +296,7 @@ def build_node_dataset_from_ply_dir(
         points_per_node=points_per_node,
         queries_per_node=queries_per_node,
         udf_truncation=udf_truncation,
+        near_surface_threshold=near_surface_threshold,
         seed=seed,
     )
 
@@ -282,6 +307,7 @@ def build_node_dataset_from_ply_paths(
     points_per_node: int = 128,
     queries_per_node: int = 64,
     udf_truncation: float = 0.25,
+    near_surface_threshold: float | None = None,
     seed: int = 0,
     octree_config: OctreeBuildConfig | None = None,
     include_leaf_only: bool = False,
@@ -296,6 +322,7 @@ def build_node_dataset_from_ply_paths(
         points_per_node=points_per_node,
         queries_per_node=queries_per_node,
         udf_truncation=udf_truncation,
+        near_surface_threshold=near_surface_threshold,
         seed=seed,
     )
 

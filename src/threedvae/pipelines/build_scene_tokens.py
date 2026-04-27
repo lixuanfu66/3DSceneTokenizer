@@ -20,8 +20,7 @@ from threedvae.scene.serializer import (
     build_llm_token_sequence_v2,
     build_scene_token_packet,
 )
-from threedvae.tokenizer.instance_encoder import encode_instance
-from threedvae.tokenizer.learned_encoder import NodeCodeProvider
+from threedvae.tokenizer.instance_encoder import NodeCodeProvider, encode_instance
 
 
 def run_single_frame_pipeline(

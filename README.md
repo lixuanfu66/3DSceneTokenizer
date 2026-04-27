@@ -13,7 +13,7 @@
 - 场景级 token 打包
 - 场景级 bbox mesh `PLY` 导出
 - 节点级调试记录导出接口
-- learned instance tokenizer 训练代码骨架
+- octree node VAE/VQVAE tokenizer 训练代码骨架
 
 ## 运行单帧 pipeline
 
@@ -29,14 +29,15 @@ python .\scripts\export_scene_tokens.py --ply D:\path\to\frame.ply --out D:\path
 - `instance_<id>_octree_nodes.jsonl`
 - `scene_tokens.json`
 
-## 训练 learned instance tokenizer
+## 训练 octree node VAE/VQVAE tokenizer
 
 训练代码基于 PyTorch，默认不会随基础依赖自动安装。
 
 ```bash
 pip install -e .[train]
 set PYTHONPATH=%CD%\src
-python .\scripts\train_instance_tokenizer.py --ply-dir D:\path\to\ply_dir --out D:\path\to\train_outputs
+python .\scripts\train_octree_node_vae.py --ply-dir D:\path\to\ply_dir --out D:\path\to\vae_outputs
+python .\scripts\train_octree_node_vqvae.py --vae-checkpoint D:\path\to\vae_outputs\best.pt --ply-dir D:\path\to\ply_dir --out D:\path\to\vqvae_outputs
 ```
 
 训练输出目录会包含：

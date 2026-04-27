@@ -4,31 +4,31 @@ from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
 
-from threedvae.data.dataset import InstancePointCloudDataset, TreeNodePointCloudDataset
-from threedvae.models.instance_tokenizer import PointNetVQTokenizer
-from threedvae.train.losses import instance_tokenizer_loss
+from threedvae.data.dataset import TreeNodePointCloudDataset
+from threedvae.train.octree_node_losses import octree_node_vae_loss
 from threedvae.utils.torch_compat import HAS_TORCH, DataLoader, require_torch, torch
 
 
 @dataclass(slots=True)
-class TrainerConfig:
+class OctreeNodeTrainerConfig:
     epochs: int = 10
-    batch_size: int = 16
+    batch_size: int = 32
     learning_rate: float = 3e-4
     weight_decay: float = 1e-4
     device: str = "cpu"
-    xyz_weight: float = 1.0
-    rgb_weight: float = 0.25
+    udf_weight: float = 1.0
+    occ_weight: float = 0.5
+    kl_weight: float = 1e-4
+    kl_warmup_ratio: float = 0.1
+    rgb_weight: float = 0.0
     vq_weight: float = 1.0
-    udf_weight: float = 0.5
     grad_clip_norm: float | None = 1.0
     num_workers: int = 0
-    log_every: int = 10
     checkpoint_every: int = 1
 
 
-class InstanceTokenizerTrainer:
-    def __init__(self, model: PointNetVQTokenizer, config: TrainerConfig) -> None:
+class OctreeNodeTrainer:
+    def __init__(self, model, config: OctreeNodeTrainerConfig) -> None:
         if not HAS_TORCH:
             require_torch()
         self.model = model.to(config.device)
@@ -38,17 +38,18 @@ class InstanceTokenizerTrainer:
             lr=config.learning_rate,
             weight_decay=config.weight_decay,
         )
+        self.global_step = 0
+        self.total_steps = 1
 
     def fit(
         self,
-        dataset: InstancePointCloudDataset | TreeNodePointCloudDataset,
+        dataset: TreeNodePointCloudDataset,
         output_dir: str,
         *,
-        val_dataset: InstancePointCloudDataset | TreeNodePointCloudDataset | None = None,
+        val_dataset: TreeNodePointCloudDataset | None = None,
     ) -> dict[str, list[float]]:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
-
         train_loader = DataLoader(
             dataset,
             batch_size=self.config.batch_size,
@@ -65,25 +66,23 @@ class InstanceTokenizerTrainer:
                 num_workers=self.config.num_workers,
                 collate_fn=val_dataset.torch_collate,
             )
-
-        history = {"total_loss": [], "xyz_loss": [], "rgb_loss": [], "vq_loss": [], "udf_loss": []}
+        self.total_steps = max(1, self.config.epochs * len(train_loader))
+        history = {
+            "total_loss": [],
+            "udf_loss": [],
+            "occ_loss": [],
+            "kl_loss": [],
+            "rgb_loss": [],
+            "vq_loss": [],
+        }
         if val_loader is not None:
-            history.update(
-                {
-                    "val_total_loss": [],
-                    "val_xyz_loss": [],
-                    "val_rgb_loss": [],
-                    "val_vq_loss": [],
-                    "val_udf_loss": [],
-                }
-            )
+            history.update({f"val_{key}": [] for key in list(history.keys())})
         best_metric = float("inf")
         for epoch in range(self.config.epochs):
             metrics = self.train_epoch(train_loader)
             for key, value in metrics.items():
                 history[key].append(float(value))
             tracked_metric = float(metrics["total_loss"])
-
             if val_loader is not None:
                 val_metrics = self.evaluate_epoch(val_loader)
                 for key, value in val_metrics.items():
@@ -107,50 +106,18 @@ class InstanceTokenizerTrainer:
 
     def train_epoch(self, loader) -> dict[str, float]:
         self.model.train()
-        total = {"total_loss": 0.0, "xyz_loss": 0.0, "rgb_loss": 0.0, "vq_loss": 0.0, "udf_loss": 0.0}
+        total = _empty_metrics()
         step_count = 0
-
         for batch in loader:
-            points = batch["points"].to(self.config.device)
-            target_xyz = batch["xyz"].to(self.config.device)
-            target_rgb = batch["rgb"].to(self.config.device)
-            query_xyz = batch["query_xyz"].to(self.config.device) if "query_xyz" in batch else None
-            target_udf = batch["query_udf"].to(self.config.device) if "query_udf" in batch else None
-
             self.optimizer.zero_grad(set_to_none=True)
-            outputs = self.model(points, query_xyz=query_xyz)
-            losses = instance_tokenizer_loss(
-                outputs.recon_points,
-                target_xyz,
-                target_rgb,
-                outputs.vq_loss,
-                udf_logits=outputs.udf_logits,
-                target_udf=target_udf,
-                xyz_weight=self.config.xyz_weight,
-                rgb_weight=self.config.rgb_weight,
-                vq_weight=self.config.vq_weight,
-                udf_weight=self.config.udf_weight,
-            )
-            if not torch.isfinite(losses.total_loss):
-                raise RuntimeError(
-                    "Encountered non-finite training loss. "
-                    f"xyz={float(losses.xyz_loss.detach().cpu()):.6f}, "
-                    f"rgb={float(losses.rgb_loss.detach().cpu()):.6f}, "
-                    f"vq={float(losses.vq_loss.detach().cpu()):.6f}, "
-                    f"udf={float(losses.udf_loss.detach().cpu()):.6f}"
-                )
+            losses = self._compute_losses(batch, train=True)
             losses.total_loss.backward()
             if self.config.grad_clip_norm is not None and self.config.grad_clip_norm > 0.0:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_clip_norm)
             self.optimizer.step()
-
-            total["total_loss"] += float(losses.total_loss.detach().cpu())
-            total["xyz_loss"] += float(losses.xyz_loss.detach().cpu())
-            total["rgb_loss"] += float(losses.rgb_loss.detach().cpu())
-            total["vq_loss"] += float(losses.vq_loss.detach().cpu())
-            total["udf_loss"] += float(losses.udf_loss.detach().cpu())
+            self.global_step += 1
+            _accumulate(total, losses)
             step_count += 1
-
         if step_count == 0:
             raise ValueError("Training dataset is empty.")
         return {key: value / step_count for key, value in total.items()}
@@ -158,38 +125,59 @@ class InstanceTokenizerTrainer:
     @torch.no_grad()
     def evaluate_epoch(self, loader) -> dict[str, float]:
         self.model.eval()
-        total = {"total_loss": 0.0, "xyz_loss": 0.0, "rgb_loss": 0.0, "vq_loss": 0.0, "udf_loss": 0.0}
+        total = _empty_metrics()
         step_count = 0
-
         for batch in loader:
-            points = batch["points"].to(self.config.device)
-            target_xyz = batch["xyz"].to(self.config.device)
-            target_rgb = batch["rgb"].to(self.config.device)
-            query_xyz = batch["query_xyz"].to(self.config.device) if "query_xyz" in batch else None
-            target_udf = batch["query_udf"].to(self.config.device) if "query_udf" in batch else None
-            outputs = self.model(points, query_xyz=query_xyz)
-            losses = instance_tokenizer_loss(
-                outputs.recon_points,
-                target_xyz,
-                target_rgb,
-                outputs.vq_loss,
-                udf_logits=outputs.udf_logits,
-                target_udf=target_udf,
-                xyz_weight=self.config.xyz_weight,
-                rgb_weight=self.config.rgb_weight,
-                vq_weight=self.config.vq_weight,
-                udf_weight=self.config.udf_weight,
-            )
-            total["total_loss"] += float(losses.total_loss.detach().cpu())
-            total["xyz_loss"] += float(losses.xyz_loss.detach().cpu())
-            total["rgb_loss"] += float(losses.rgb_loss.detach().cpu())
-            total["vq_loss"] += float(losses.vq_loss.detach().cpu())
-            total["udf_loss"] += float(losses.udf_loss.detach().cpu())
+            losses = self._compute_losses(batch, train=False)
+            _accumulate(total, losses)
             step_count += 1
-
         if step_count == 0:
             raise ValueError("Validation dataset is empty.")
         return {key: value / step_count for key, value in total.items()}
+
+    def _compute_losses(self, batch, *, train: bool):
+        del train
+        batch = _move_batch(batch, self.config.device)
+        outputs = self.model(
+            xyz=batch["xyz"],
+            rgb=batch["rgb"],
+            query_xyz=batch["query_xyz"],
+            rgb_query_xyz=batch.get("query_rgb_xyz"),
+            node_center=batch["node_center_local"],
+            node_size=batch["node_size_local"],
+            level=batch["level"],
+            split_flag=batch["split_flag"],
+            child_index=batch["child_index"],
+            semantic_id=batch["semantic_id"],
+        )
+        kl_weight = self._current_kl_weight()
+        losses = octree_node_vae_loss(
+            pred_udf=outputs.udf,
+            pred_occ_logits=outputs.occ_logits,
+            target_udf=batch["query_udf"],
+            target_occ=batch["query_occ"],
+            mu=outputs.mu,
+            logvar=outputs.logvar,
+            pred_rgb=outputs.rgb,
+            target_rgb=batch.get("query_rgb"),
+            rgb_mask=batch.get("query_rgb_mask"),
+            vq_loss=getattr(outputs, "vq_loss", None),
+            udf_weight=self.config.udf_weight,
+            occ_weight=self.config.occ_weight,
+            kl_weight=kl_weight,
+            rgb_weight=self.config.rgb_weight,
+            vq_weight=self.config.vq_weight,
+        )
+        if not torch.isfinite(losses.total_loss):
+            raise RuntimeError("Encountered non-finite octree node training loss.")
+        return losses
+
+    def _current_kl_weight(self) -> float:
+        warmup_steps = int(self.total_steps * max(0.0, self.config.kl_warmup_ratio))
+        if warmup_steps <= 0:
+            return float(self.config.kl_weight)
+        scale = min(1.0, float(self.global_step + 1) / float(warmup_steps))
+        return float(self.config.kl_weight * scale)
 
     def save_checkpoint(self, path: Path, epoch: int) -> None:
         torch.save(
@@ -198,7 +186,35 @@ class InstanceTokenizerTrainer:
                 "model_state_dict": self.model.state_dict(),
                 "optimizer_state_dict": self.optimizer.state_dict(),
                 "model_config": self.model.export_config() if hasattr(self.model, "export_config") else None,
-                "config": asdict(self.config),
+                "trainer_config": asdict(self.config),
+                "global_step": self.global_step,
             },
             path,
         )
+
+
+def _move_batch(batch, device: str):
+    moved = {}
+    for key, value in batch.items():
+        moved[key] = value.to(device) if hasattr(value, "to") else value
+    return moved
+
+
+def _empty_metrics() -> dict[str, float]:
+    return {
+        "total_loss": 0.0,
+        "udf_loss": 0.0,
+        "occ_loss": 0.0,
+        "kl_loss": 0.0,
+        "rgb_loss": 0.0,
+        "vq_loss": 0.0,
+    }
+
+
+def _accumulate(total: dict[str, float], losses) -> None:
+    total["total_loss"] += float(losses.total_loss.detach().cpu())
+    total["udf_loss"] += float(losses.udf_loss.detach().cpu())
+    total["occ_loss"] += float(losses.occ_loss.detach().cpu())
+    total["kl_loss"] += float(losses.kl_loss.detach().cpu())
+    total["rgb_loss"] += float(losses.rgb_loss.detach().cpu())
+    total["vq_loss"] += float(losses.vq_loss.detach().cpu())

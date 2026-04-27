@@ -15,8 +15,7 @@ from threedvae.data.schema import (
     SerializedTokenSequence,
 )
 from threedvae.octree.split_policy import OctreeBuildConfig
-from threedvae.tokenizer.instance_encoder import encode_instance
-from threedvae.tokenizer.learned_encoder import NodeCodeProvider
+from threedvae.tokenizer.instance_encoder import NodeCodeProvider, encode_instance
 
 
 def build_scene_token_packet(

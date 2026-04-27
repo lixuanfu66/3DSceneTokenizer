@@ -4,14 +4,14 @@ import argparse
 
 from threedvae.octree.split_policy import OctreeBuildConfig
 from threedvae.pipelines.build_scene_tokens import run_single_frame_pipeline
-from threedvae.tokenizer.learned_encoder import LearnedNodeCodeEncoder
+from threedvae.tokenizer.octree_node_encoder import OctreeNodeCodeEncoder
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Export scene tokens with a learned node code encoder.")
+    parser = argparse.ArgumentParser(description="Export scene tokens with an octree node VQVAE code encoder.")
     parser.add_argument("--ply", required=True, help="Input single-frame PLY path.")
     parser.add_argument("--out", required=True, help="Output directory.")
-    parser.add_argument("--checkpoint", required=True, help="Trained tokenizer checkpoint path.")
+    parser.add_argument("--checkpoint", required=True, help="Trained octree node VQVAE checkpoint path.")
     parser.add_argument("--scene-id", default=None, help="Optional scene id override.")
     parser.add_argument("--frame-id", default=None, help="Optional frame id override.")
     parser.add_argument("--device", default="cpu", help="Inference device, e.g. cpu or cuda.")
@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    provider = LearnedNodeCodeEncoder.from_checkpoint(args.checkpoint, device=args.device, seed=args.seed)
+    provider = OctreeNodeCodeEncoder.from_checkpoint(args.checkpoint, device=args.device, seed=args.seed)
     octree_config = OctreeBuildConfig(
         high_priority_semantics=_parse_semantic_ids(args.high_priority_semantics),
         xy_only_semantics=_parse_semantic_ids(args.xy_only_semantics),

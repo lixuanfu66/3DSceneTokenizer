@@ -49,6 +49,12 @@ class NodeDatasetTest(unittest.TestCase):
         self.assertIn("split_flag", sample)
         self.assertEqual(sample["query_xyz"].shape, (64, 3))
         self.assertEqual(sample["query_udf"].shape, (64, 1))
+        self.assertEqual(sample["query_occ"].shape, (64, 1))
+        self.assertEqual(sample["node_center_local"].shape, (3,))
+        self.assertEqual(sample["node_size_local"].shape, (3,))
+        self.assertEqual(sample["query_rgb_xyz"].shape, (4, 3))
+        self.assertEqual(sample["query_rgb"].shape, (4, 3))
+        self.assertEqual(sample["query_rgb_mask"].shape, (4, 1))
         self.assertGreaterEqual(float(sample["query_udf"].min()), 0.0)
 
 
