@@ -28,16 +28,24 @@ def octree_node_vae_loss(
     rgb_mask=None,
     vq_loss=None,
     udf_weight: float = 1.0,
-    occ_weight: float = 0.5,
+    occ_weight: float = 0.1,
     kl_weight: float = 1e-4,
     rgb_weight: float = 0.0,
     vq_weight: float = 1.0,
+    occ_target_mode: str = "soft_udf",
+    occ_soft_distance: float = 0.03,
 ) -> OctreeNodeLossBreakdown:
     if not HAS_TORCH:
         require_torch()
 
     udf = F.smooth_l1_loss(pred_udf, target_udf)
-    occ = F.binary_cross_entropy_with_logits(pred_occ_logits, target_occ)
+    occ_target = _occupancy_target_from_udf(
+        target_udf=target_udf,
+        fallback_target=target_occ,
+        mode=occ_target_mode,
+        soft_distance=occ_soft_distance,
+    )
+    occ = F.binary_cross_entropy_with_logits(pred_occ_logits, occ_target)
     kl = _kl_normal(mu, logvar)
     rgb = pred_udf.new_tensor(0.0)
     if pred_rgb is not None and target_rgb is not None and rgb_weight > 0.0:
@@ -65,6 +73,16 @@ def octree_node_vae_loss(
 
 def _kl_normal(mu, logvar):
     return -0.5 * torch.mean(1.0 + logvar - mu.pow(2) - logvar.exp())
+
+
+def _occupancy_target_from_udf(*, target_udf, fallback_target, mode: str, soft_distance: float):
+    normalized_mode = mode.strip().lower()
+    if normalized_mode == "hard":
+        return fallback_target
+    if normalized_mode != "soft_udf":
+        raise ValueError(f"Unsupported occupancy target mode: {mode}")
+    distance = max(float(soft_distance), 1e-6)
+    return torch.exp(-torch.clamp(target_udf, min=0.0) / distance)
 
 
 def _masked_mse(pred, target, mask):

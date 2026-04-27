@@ -34,6 +34,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--use-rgb-fusion", action="store_true")
     parser.add_argument("--predict-rgb", action="store_true")
     parser.add_argument("--rgb-weight", type=float, default=0.0)
+    parser.add_argument("--occ-weight", type=float, default=0.1)
+    parser.add_argument(
+        "--occ-target-mode",
+        choices=("soft_udf", "hard"),
+        default="soft_udf",
+        help="Use soft UDF-derived occupancy targets by default; `hard` keeps the thresholded query_occ labels.",
+    )
+    parser.add_argument("--occ-soft-distance", type=float, default=0.03)
     parser.add_argument("--kl-weight", type=float, default=1e-4)
     parser.add_argument("--kl-warmup-ratio", type=float, default=0.1)
     parser.add_argument("--device", default="cpu")
@@ -99,6 +107,9 @@ def main() -> None:
             kl_weight=args.kl_weight,
             kl_warmup_ratio=args.kl_warmup_ratio,
             rgb_weight=args.rgb_weight,
+            occ_weight=args.occ_weight,
+            occ_target_mode=args.occ_target_mode,
+            occ_soft_distance=args.occ_soft_distance,
             num_workers=args.num_workers,
             checkpoint_every=args.checkpoint_every,
         ),

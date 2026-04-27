@@ -17,11 +17,13 @@ class OctreeNodeTrainerConfig:
     weight_decay: float = 1e-4
     device: str = "cpu"
     udf_weight: float = 1.0
-    occ_weight: float = 0.5
+    occ_weight: float = 0.1
     kl_weight: float = 1e-4
     kl_warmup_ratio: float = 0.1
     rgb_weight: float = 0.0
     vq_weight: float = 1.0
+    occ_target_mode: str = "soft_udf"
+    occ_soft_distance: float = 0.03
     grad_clip_norm: float | None = 1.0
     num_workers: int = 0
     checkpoint_every: int = 1
@@ -167,6 +169,8 @@ class OctreeNodeTrainer:
             kl_weight=kl_weight,
             rgb_weight=self.config.rgb_weight,
             vq_weight=self.config.vq_weight,
+            occ_target_mode=self.config.occ_target_mode,
+            occ_soft_distance=self.config.occ_soft_distance,
         )
         if not torch.isfinite(losses.total_loss):
             raise RuntimeError("Encountered non-finite octree node training loss.")
