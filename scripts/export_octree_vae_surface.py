@@ -24,6 +24,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--points-per-node", type=int, default=32)
     parser.add_argument("--candidates-per-node", type=int, default=512)
+    parser.add_argument("--adaptive-candidates", action="store_true")
+    parser.add_argument("--min-candidates-per-node", type=int, default=128)
+    parser.add_argument("--max-candidates-per-node", type=int, default=2048)
+    parser.add_argument("--reference-node-area", type=float, default=1.0)
+    parser.add_argument("--candidate-bucket-size", type=int, default=128)
     parser.add_argument("--candidate-strategy", choices=("uniform", "hybrid"), default="hybrid")
     parser.add_argument("--surface-threshold", type=float, default=0.03)
     parser.add_argument("--topk-per-node", type=int, default=4)
@@ -54,9 +59,9 @@ def main() -> None:
     frame_rows: dict[str, list[tuple[float, float, float, int, int, int, int, float, int]]] = defaultdict(list)
     frame_stats: dict[str, dict[str, float | int]] = defaultdict(empty_stats)
 
-    for start in range(0, len(samples), args.batch_nodes):
-        batch_samples = samples[start : start + args.batch_nodes]
-        batch = build_reconstruction_batch(batch_samples, args)
+    sample_jobs = [(sample, candidate_count_for_node(sample.size_local, args)) for sample in samples]
+    for batch_samples, candidate_count in iter_candidate_batches(sample_jobs, args.batch_nodes):
+        batch = build_reconstruction_batch(batch_samples, args, candidate_count=candidate_count)
         with torch.no_grad():
             outputs = model(
                 xyz=torch.as_tensor(batch["xyz"], dtype=torch.float32, device=args.device),
@@ -74,7 +79,9 @@ def main() -> None:
             frame_id = sample.frame_id
             stats = frame_stats[frame_id]
             stats["total_nodes"] = int(stats["total_nodes"]) + 1
-            stats["total_candidates"] = int(stats["total_candidates"]) + int(args.candidates_per_node)
+            stats["total_candidates"] = int(stats["total_candidates"]) + int(candidate_count)
+            stats["min_candidates_per_node"] = min(int(stats["min_candidates_per_node"]), int(candidate_count))
+            stats["max_candidates_per_node"] = max(int(stats["max_candidates_per_node"]), int(candidate_count))
             query_local = batch["query_xyz"][item_index]
             keep_mask, keep_kind = select_surface_candidates(
                 pred_udf[item_index],
@@ -114,6 +121,11 @@ def main() -> None:
         "candidate_strategy": args.candidate_strategy,
         "points_per_node": args.points_per_node,
         "candidates_per_node": args.candidates_per_node,
+        "adaptive_candidates": bool(args.adaptive_candidates),
+        "min_candidates_per_node": args.min_candidates_per_node,
+        "max_candidates_per_node": args.max_candidates_per_node,
+        "reference_node_area": args.reference_node_area,
+        "candidate_bucket_size": args.candidate_bucket_size,
         "surface_threshold": args.surface_threshold,
         "topk_per_node": args.topk_per_node,
         "topk_max_udf": args.topk_max_udf,
@@ -136,6 +148,8 @@ def main() -> None:
             "threshold_points": int(stats["threshold_points"]),
             "kept_points": int(stats["kept_points"]),
             "retention_ratio": float(stats["kept_points"]) / total_candidates,
+            "min_candidates_per_node": int(stats["min_candidates_per_node"]),
+            "max_candidates_per_node": int(stats["max_candidates_per_node"]),
             "ply": out_name,
         }
     summary["total_tokens"] = sum(item["total_tokens"] for item in summary["frames"].values())
@@ -148,7 +162,25 @@ def main() -> None:
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
-def build_reconstruction_batch(samples, args: argparse.Namespace) -> dict[str, np.ndarray]:
+def iter_candidate_batches(
+    sample_jobs,
+    batch_nodes: int,
+):
+    buckets: dict[int, list[object]] = defaultdict(list)
+    for sample, candidate_count in sample_jobs:
+        buckets[int(candidate_count)].append(sample)
+    for candidate_count in sorted(buckets):
+        bucket = buckets[candidate_count]
+        for start in range(0, len(bucket), batch_nodes):
+            yield bucket[start : start + batch_nodes], int(candidate_count)
+
+
+def build_reconstruction_batch(
+    samples,
+    args: argparse.Namespace,
+    *,
+    candidate_count: int,
+) -> dict[str, np.ndarray]:
     xyz_batch = []
     rgb_batch = []
     query_batch = []
@@ -170,7 +202,7 @@ def build_reconstruction_batch(samples, args: argparse.Namespace) -> dict[str, n
             node_center=sample.center_local,
             node_size=sample.size_local,
             split_flag=sample.split_flag,
-            count=args.candidates_per_node,
+            count=candidate_count,
             strategy=args.candidate_strategy,
             seed=args.seed + 1_000_000 + offset + int(sample.node_id),
         )
@@ -238,6 +270,21 @@ def build_candidate_queries(
     return queries[:count].astype(np.float32, copy=False)
 
 
+def candidate_count_for_node(node_size: np.ndarray, args: argparse.Namespace) -> int:
+    if not args.adaptive_candidates:
+        return max(1, int(args.candidates_per_node))
+    size = np.maximum(node_size.astype(np.float32, copy=False), 1e-3)
+    xy_area = float(size[0] * size[1])
+    yz_area = float(size[1] * size[2])
+    xz_area = float(size[0] * size[2])
+    surface_area = max(2.0 * (xy_area + yz_area + xz_area), 1e-6)
+    reference_area = max(float(args.reference_node_area), 1e-6)
+    raw = float(args.candidates_per_node) * math.sqrt(surface_area / reference_area)
+    bucket = max(1, int(args.candidate_bucket_size))
+    rounded = int(round(raw / bucket) * bucket)
+    return int(np.clip(rounded, int(args.min_candidates_per_node), int(args.max_candidates_per_node)))
+
+
 def select_surface_candidates(
     pred_udf: np.ndarray,
     *,
@@ -298,6 +345,8 @@ def empty_stats() -> dict[str, float | int]:
         "total_candidates": 0,
         "threshold_points": 0,
         "kept_points": 0,
+        "min_candidates_per_node": 2**31 - 1,
+        "max_candidates_per_node": 0,
     }
 
 
