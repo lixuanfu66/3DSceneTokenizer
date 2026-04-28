@@ -20,6 +20,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out", required=True)
     parser.add_argument("--points-per-node", type=int, default=128)
     parser.add_argument("--queries-per-node", type=int, default=128)
+    parser.add_argument(
+        "--query-strategy",
+        choices=("uniform", "layered"),
+        default="uniform",
+        help="Sampling strategy for UDF supervision queries.",
+    )
     parser.add_argument("--udf-truncation", type=float, default=0.25)
     parser.add_argument("--near-surface-threshold", type=float, default=None)
     parser.add_argument("--epochs", type=int, default=10)
@@ -67,6 +73,7 @@ def main() -> None:
         seed=args.seed,
         octree_config=octree_config,
         include_leaf_only=args.include_leaf_only,
+        query_strategy=args.query_strategy,
     )
     val_dataset = (
         build_node_dataset_from_ply_paths(
@@ -78,6 +85,7 @@ def main() -> None:
             seed=args.seed + 10_000,
             octree_config=octree_config,
             include_leaf_only=args.include_leaf_only,
+            query_strategy=args.query_strategy,
         )
         if val_paths
         else None
