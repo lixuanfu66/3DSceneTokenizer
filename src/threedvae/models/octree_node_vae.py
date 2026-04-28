@@ -333,9 +333,9 @@ if HAS_TORCH:
 
 
     def _int_bits(values: torch.Tensor, *, bit_count: int, device) -> torch.Tensor:
-        values = values.to(device=device, dtype=torch.int64)
-        bits = [((values >> bit) & 1).to(dtype=torch.float32) for bit in range(bit_count)]
-        return torch.stack(bits, dim=-1)
+        values_cpu = values.detach().to(device="cpu", dtype=torch.int64)
+        bits = [((values_cpu // (1 << bit)) % 2).to(dtype=torch.float32) for bit in range(bit_count)]
+        return torch.stack(bits, dim=-1).to(device=device)
 
 else:
 
