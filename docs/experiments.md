@@ -1022,3 +1022,182 @@ Weighted UDF loss substantially improves measured UDF and RGB reconstruction on 
 ### Follow-Up Decision
 
 Use the new weighted checkpoint as the current best candidate. Compare `0.005 / 0.006 / 0.007` visually. If the surface is still thick, next improve candidate placement and training target sharpness instead of only changing threshold: adaptive candidates by node size, stronger near-zero surface anchor coverage, and optional Chamfer/F-score evaluation against validation points.
+
+## EXP-019: RGB VQVAE Training Smoke and Validation
+
+### Improvement Goal
+
+Walk through the VQVAE training path on the current object-level RGB VAE setup before making further VAE architecture changes. The goal is to confirm that continuous node latents can be quantized into discrete code indices while preserving enough UDF/RGB reconstruction quality for later tokenizer work.
+
+### Scheme Design
+
+Use the best RGB VAE checkpoint from EXP-018 as initialization, then replace the continuous latent path with a vector quantizer:
+
+- Encoder produces `mu`.
+- `mu` is quantized by nearest codebook entry.
+- Decoder receives the quantized latent.
+- Reconstruction losses remain UDF, occupancy, and RGB.
+- VQ loss is added with commitment cost `0.25`.
+
+One important code change was added before training: initialize the codebook from pretrained encoder latents sampled from the training set. This avoids starting from a tiny random codebook that is far away from the pretrained VAE latent distribution.
+
+### Experiment Design
+
+- Data: 80 train / 20 validation task-relevant Objaverse++ object PLY files.
+- Octree: object preset, leaf-only, `min_node_points=4`.
+- Initialization: `outputs/object_level_geo_rgb_vae_leaf_min4_calibrated_weighted_h256_l128_e12/best.pt`.
+- Codebook size: `1024`.
+- Query strategy: `calibrated_surface`.
+- Training: 8 epochs, batch size `96`, `queries_per_node=192`, NPU `npu:8`.
+- Loss: weighted UDF loss from EXP-018, RGB weight `1.0`, VQ weight `1.0`.
+- Export: threshold-only, no Top-K fallback, `threshold=0.006`, predicted RGB.
+
+### Implementation
+
+Updated:
+
+- `scripts/train_octree_node_vqvae.py`
+- `scripts/evaluate_octree_vae_checkpoint.py`
+- `scripts/export_octree_vae_surface.py`
+
+Added:
+
+- `--init-codebook-from-data`
+- `--codebook-init-max-samples`
+- VQVAE-aware checkpoint loading for eval/export.
+- Codebook usage metrics in checkpoint evaluation: `used_code_count`, `used_code_ratio`, `code_perplexity`.
+
+### Results
+
+Smoke run:
+
+- `outputs/_smoke_vqvae_cb128_e1`
+- 1 epoch completed.
+- VQVAE checkpoint loading and codebook metrics verified.
+- `codebook_size=128`, `used_code_count=13`, `code_perplexity=6.90`.
+
+Formal checkpoint:
+
+`outputs/object_level_geo_rgb_vqvae_leaf_min4_calibrated_weighted_cb1024_e8/best.pt`
+
+Validation metrics:
+
+| Metric | VAE EXP-018 | VQVAE EXP-019 |
+|---|---:|---:|
+| sample_count | 21,417 | 21,417 |
+| query_count | 4,112,064 | 4,112,064 |
+| UDF MAE | 0.002895 | 0.003983 |
+| UDF RMSE | 0.006646 | 0.008736 |
+| Occupancy accuracy | 0.967987 | 0.965797 |
+| RGB MAE | 0.050671 | 0.080894 |
+| RGB MSE | 0.008475 | 0.013443 |
+| RGB PSNR | 20.72 dB | 18.72 dB |
+| Codebook size | n/a | 1,024 |
+| Used codes | n/a | 279 |
+| Used code ratio | n/a | 27.25% |
+| Code perplexity | n/a | 101.12 |
+
+Threshold-only export:
+
+| Threshold | Kept Points | Retention |
+|---:|---:|---:|
+| 0.006 | 13,178,067 | 71.22% |
+
+Local output:
+
+- `outputs/object_level_geo_rgb_vqvae_leaf_min4_calibrated_weighted_cb1024_e8/val20_pred_rgb_surface_threshold_0p006`
+
+### Final Conclusion
+
+The VQVAE training, evaluation, and RGB point-cloud export path is now functionally complete. Quantization causes expected reconstruction degradation compared with the continuous VAE, especially in RGB PSNR. Codebook usage is nonzero and not fully collapsed, but `279/1024` used codes and perplexity `101` indicate that codebook utilization is still modest.
+
+### Follow-Up Decision
+
+Use EXP-019 as the baseline VQVAE. Before optimizing visual quality, first improve discrete-token health: compare smaller codebooks such as `256` or `512`, consider longer training, and track code usage/perplexity alongside reconstruction metrics. If RGB quality remains weak, train geometry-only VQVAE first, then add RGB decoding.
+
+## EXP-020: EMA VQVAE with Codebook Size 512
+
+### Improvement Goal
+
+Reduce VQVAE block artifacts and color patches by improving codebook health. The user observed that the baseline VQVAE point cloud was usable but had stronger block traces, more noise, and color patches that looked like one block sharing one color.
+
+### Scheme Design
+
+Test two controlled changes against EXP-019:
+
+- Reduce `codebook_size` from `1024` to `512`.
+- Replace gradient-updated VQ with EMA vector quantization.
+
+The EMA codebook is updated as an online moving average of encoder latents assigned to each code. This should make code vectors behave more like stable cluster centers and can improve code usage stability. The codebook is still initialized from pretrained VAE encoder latents.
+
+### Experiment Design
+
+- Data: 80 train / 20 validation task-relevant Objaverse++ object PLY files.
+- Octree: object preset, leaf-only, `min_node_points=4`.
+- Initialization: EXP-018 RGB VAE checkpoint.
+- Quantizer: EMA VQ, `codebook_size=512`, `ema_decay=0.99`, commitment cost `0.25`.
+- Query strategy: `calibrated_surface`.
+- Training: 8 epochs, batch size `96`, `queries_per_node=192`, NPU `npu:8`.
+- Export: threshold-only, no Top-K fallback, `threshold=0.006`, predicted RGB.
+
+### Implementation
+
+Updated:
+
+- `src/threedvae/models/octree_node_vqvae.py`
+- `scripts/train_octree_node_vqvae.py`
+- `tests/test_octree_node_vae.py`
+
+Added:
+
+- `EMAVectorQuantizer`
+- `--quantizer-type ema`
+- `--ema-decay`
+- EMA buffer synchronization when initializing the codebook from data.
+
+### Results
+
+Smoke run:
+
+- `outputs/_smoke_vqvae_ema_cb64_e1`
+- 1 epoch completed on NPU.
+- EMA update path verified.
+
+Formal checkpoint:
+
+`outputs/object_level_geo_rgb_vqvae_leaf_min4_calibrated_weighted_ema_cb512_e8/best.pt`
+
+Validation metrics:
+
+| Metric | Standard VQ cb1024 | EMA VQ cb512 |
+|---|---:|---:|
+| sample_count | 21,417 | 21,417 |
+| query_count | 4,112,064 | 4,112,064 |
+| UDF MAE | 0.003983 | 0.003967 |
+| UDF RMSE | 0.008736 | 0.007997 |
+| Occupancy accuracy | 0.965797 | 0.968290 |
+| RGB MAE | 0.080894 | 0.075320 |
+| RGB MSE | 0.013443 | 0.012294 |
+| RGB PSNR | 18.72 dB | 19.10 dB |
+| Codebook size | 1,024 | 512 |
+| Used codes | 279 | 151 |
+| Used code ratio | 27.25% | 29.49% |
+| Code perplexity | 101.12 | 85.63 |
+
+Threshold-only export:
+
+| Threshold | Standard VQ cb1024 | EMA VQ cb512 |
+|---:|---:|---:|
+| 0.006 kept points | 13,178,067 | 13,305,063 |
+
+Local output:
+
+- `outputs/object_level_geo_rgb_vqvae_leaf_min4_calibrated_weighted_ema_cb512_e8/val20_pred_rgb_surface_threshold_0p006`
+
+### Final Conclusion
+
+EMA cb512 improves reconstruction metrics over the standard cb1024 VQVAE: better UDF RMSE, occupancy accuracy, RGB MAE/MSE/PSNR, and a slightly higher used-code ratio. It does not reduce exported point count at threshold `0.006`; the visual decision depends on whether color patches and block boundaries are softer in the exported PLY.
+
+### Follow-Up Decision
+
+Use EMA cb512 as the stronger VQVAE baseline if visual block artifacts improve. If color patches remain obvious, the next change should be geometry VQ plus continuous/residual RGB decoding, because a single node-level discrete latent is still likely to quantize color too coarsely.

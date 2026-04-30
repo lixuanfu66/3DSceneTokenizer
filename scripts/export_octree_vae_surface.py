@@ -11,6 +11,7 @@ import numpy as np
 from threedvae.data.dataset import collect_node_samples_from_ply_paths, sample_point_cloud
 from threedvae.data.loaders.ply_loader import load_ply_frame
 from threedvae.models.octree_node_vae import OctreeNodeVAE
+from threedvae.models.octree_node_vqvae import OctreeNodeVQVAE
 from threedvae.octree.split_policy import OctreeBuildConfig
 from threedvae.scene.builder import build_scene_frame
 from threedvae.utils.torch_compat import require_torch
@@ -60,7 +61,7 @@ def main() -> None:
     pose_lookup = build_pose_lookup(ply_paths)
 
     payload = torch.load(args.checkpoint, map_location=args.device)
-    model = OctreeNodeVAE(**payload["model_config"])
+    model = build_model_from_config(payload["model_config"])
     model.load_state_dict(payload["model_state_dict"])
     model.to(args.device)
     model.eval()
@@ -310,6 +311,12 @@ def build_octree_config(preset: str) -> OctreeBuildConfig:
     if preset == "object":
         return OctreeBuildConfig.with_default_object_semantics()
     return OctreeBuildConfig.with_default_carla_semantics()
+
+
+def build_model_from_config(model_config: dict):
+    if "codebook_size" in model_config:
+        return OctreeNodeVQVAE(**model_config)
+    return OctreeNodeVAE(**model_config)
 
 
 def select_surface_candidates(

@@ -41,22 +41,89 @@ if HAS_TORCH:
             return quantized, encoding_indices.view(z.shape[0]), vq_loss
 
 
+    class EMAVectorQuantizer(nn.Module):
+        def __init__(
+            self,
+            codebook_size: int,
+            embedding_dim: int,
+            commitment_cost: float = 0.25,
+            decay: float = 0.99,
+            epsilon: float = 1e-5,
+        ) -> None:
+            super().__init__()
+            self.embedding_dim = int(embedding_dim)
+            self.codebook_size = int(codebook_size)
+            self.commitment_cost = float(commitment_cost)
+            self.decay = float(decay)
+            self.epsilon = float(epsilon)
+            self.codebook = nn.Embedding(self.codebook_size, self.embedding_dim)
+            self.codebook.weight.data.uniform_(-1.0 / self.codebook_size, 1.0 / self.codebook_size)
+            self.codebook.weight.requires_grad_(False)
+            self.register_buffer("ema_cluster_size", torch.ones(self.codebook_size))
+            self.register_buffer("ema_code_sum", self.codebook.weight.data.clone())
+
+        def forward(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+            flat_z = z.reshape(-1, self.embedding_dim)
+            distances = (
+                flat_z.pow(2).sum(dim=1, keepdim=True)
+                - 2.0 * flat_z @ self.codebook.weight.t()
+                + self.codebook.weight.pow(2).sum(dim=1)
+            )
+            encoding_indices = torch.argmin(distances, dim=1)
+            quantized = self.codebook(encoding_indices).view_as(z)
+
+            if self.training:
+                encodings = F.one_hot(encoding_indices, self.codebook_size).to(dtype=flat_z.dtype)
+                cluster_size = encodings.sum(dim=0)
+                code_sum = encodings.t() @ flat_z.detach()
+                self.ema_cluster_size.mul_(self.decay).add_(cluster_size, alpha=1.0 - self.decay)
+                self.ema_code_sum.mul_(self.decay).add_(code_sum, alpha=1.0 - self.decay)
+
+                n = self.ema_cluster_size.sum()
+                smoothed_size = (
+                    (self.ema_cluster_size + self.epsilon)
+                    / (n + self.codebook_size * self.epsilon)
+                    * n
+                )
+                normalized_codebook = self.ema_code_sum / smoothed_size.unsqueeze(1).clamp_min(self.epsilon)
+                self.codebook.weight.data.copy_(normalized_codebook)
+                quantized = self.codebook(encoding_indices).view_as(z)
+
+            vq_loss = self.commitment_cost * F.mse_loss(quantized.detach(), z)
+            quantized = z + (quantized - z).detach()
+            return quantized, encoding_indices.view(z.shape[0]), vq_loss
+
+
     class OctreeNodeVQVAE(OctreeNodeVAE):
         def __init__(
             self,
             *,
             codebook_size: int = 4096,
             commitment_cost: float = 0.25,
+            quantizer_type: str = "standard",
+            ema_decay: float = 0.99,
             **kwargs,
         ) -> None:
             super().__init__(**kwargs)
             self.codebook_size = int(codebook_size)
             self.commitment_cost = float(commitment_cost)
-            self.quantizer = VectorQuantizer(
-                codebook_size=self.codebook_size,
-                embedding_dim=self.config.latent_dim,
-                commitment_cost=self.commitment_cost,
-            )
+            self.quantizer_type = quantizer_type.strip().lower()
+            self.ema_decay = float(ema_decay)
+            if self.quantizer_type == "standard":
+                self.quantizer = VectorQuantizer(
+                    codebook_size=self.codebook_size,
+                    embedding_dim=self.config.latent_dim,
+                    commitment_cost=self.commitment_cost,
+                )
+            elif self.quantizer_type == "ema":
+                self.quantizer = EMAVectorQuantizer(
+                    codebook_size=self.codebook_size,
+                    embedding_dim=self.config.latent_dim,
+                    commitment_cost=self.commitment_cost,
+                    decay=self.ema_decay,
+                )
+            else:
+                raise ValueError(f"Unsupported quantizer_type: {quantizer_type}")
 
         def forward(
             self,
@@ -145,6 +212,8 @@ if HAS_TORCH:
                 {
                     "codebook_size": self.codebook_size,
                     "commitment_cost": self.commitment_cost,
+                    "quantizer_type": self.quantizer_type,
+                    "ema_decay": self.ema_decay,
                 }
             )
             return config

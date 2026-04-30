@@ -74,6 +74,26 @@ class OctreeNodeVAETest(unittest.TestCase):
         self.assertEqual(outputs.encoding_indices.shape, (2,))
         self.assertTrue(torch.isfinite(outputs.vq_loss))
 
+    def test_ema_octree_node_vqvae_returns_code_indices(self) -> None:
+        torch, _, _, _, _ = require_torch()
+        batch = _make_batch(torch)
+        model = OctreeNodeVQVAE(
+            num_points=8,
+            hidden_dim=32,
+            latent_dim=16,
+            semantic_vocab_size=32,
+            semantic_dim=4,
+            num_attention_heads=4,
+            codebook_size=16,
+            quantizer_type="ema",
+            ema_decay=0.9,
+        )
+
+        outputs = model(**batch)
+        self.assertEqual(outputs.encoding_indices.shape, (2,))
+        self.assertTrue(torch.isfinite(outputs.vq_loss))
+        self.assertEqual(model.export_config()["quantizer_type"], "ema")
+
     def test_bucket_weighted_udf_loss_prioritizes_near_surface(self) -> None:
         torch, _, _, _, _ = require_torch()
         pred_udf = torch.tensor([[[0.020], [0.035]]])

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from threedvae.data.dataset import build_node_dataset_from_ply_paths
 from threedvae.models.octree_node_vae import OctreeNodeVAE
+from threedvae.models.octree_node_vqvae import OctreeNodeVQVAE
 from threedvae.octree.split_policy import OctreeBuildConfig
 from threedvae.utils.torch_compat import DataLoader, require_torch
 
@@ -51,7 +52,7 @@ def main() -> None:
     model_config = payload.get("model_config")
     if not model_config:
         raise ValueError("Checkpoint is missing model_config.")
-    model = OctreeNodeVAE(**model_config)
+    model = build_model_from_config(model_config)
     model.load_state_dict(payload["model_state_dict"])
     model.to(args.device)
     model.eval()
@@ -67,6 +68,10 @@ def main() -> None:
         "rgb_sq_sum": 0.0,
         "rgb_count": 0,
     }
+    code_counts = None
+    codebook_size = int(model_config.get("codebook_size", 0) or 0)
+    if codebook_size > 0:
+        code_counts = torch.zeros(codebook_size, dtype=torch.float64)
     with torch.no_grad():
         for batch in loader:
             moved = {key: value.to(args.device) if hasattr(value, "to") else value for key, value in batch.items()}
@@ -98,6 +103,13 @@ def main() -> None:
                 totals["rgb_abs_sum"] += float(rgb_error.sum().detach().cpu())
                 totals["rgb_sq_sum"] += float((rgb_error * rgb_error).sum().detach().cpu())
                 totals["rgb_count"] += int(rgb_error.numel())
+            encoding_indices = getattr(outputs, "encoding_indices", None)
+            if code_counts is not None and encoding_indices is not None:
+                batch_counts = torch.bincount(
+                    encoding_indices.detach().cpu().reshape(-1),
+                    minlength=codebook_size,
+                ).to(dtype=torch.float64)
+                code_counts += batch_counts
 
     query_count = max(int(totals["query_count"]), 1)
     rgb_count = max(int(totals["rgb_count"]), 1)
@@ -117,6 +129,20 @@ def main() -> None:
         "rgb_mse": rgb_mse,
         "rgb_psnr": (-10.0 * math.log10(max(rgb_mse, 1e-12))) if rgb_mse is not None else None,
     }
+    if code_counts is not None:
+        code_total = float(code_counts.sum())
+        used = int((code_counts > 0).sum().item())
+        probs = code_counts / max(code_total, 1.0)
+        nonzero = probs[probs > 0]
+        entropy = float(-(nonzero * torch.log(nonzero)).sum().item())
+        metrics.update(
+            {
+                "codebook_size": codebook_size,
+                "used_code_count": used,
+                "used_code_ratio": used / max(codebook_size, 1),
+                "code_perplexity": math.exp(entropy) if nonzero.numel() else 0.0,
+            }
+        )
     (out_dir / "checkpoint_eval_metrics.json").write_text(
         json.dumps(metrics, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -128,6 +154,12 @@ def build_octree_config(preset: str) -> OctreeBuildConfig:
     if preset == "object":
         return OctreeBuildConfig.with_default_object_semantics()
     return OctreeBuildConfig.with_default_carla_semantics()
+
+
+def build_model_from_config(model_config: dict):
+    if "codebook_size" in model_config:
+        return OctreeNodeVQVAE(**model_config)
+    return OctreeNodeVAE(**model_config)
 
 
 if __name__ == "__main__":

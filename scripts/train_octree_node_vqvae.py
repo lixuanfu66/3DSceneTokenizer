@@ -8,7 +8,7 @@ from threedvae.data.dataset import build_node_dataset_from_ply_paths
 from threedvae.models.octree_node_vqvae import OctreeNodeVQVAE
 from threedvae.octree.split_policy import OctreeBuildConfig
 from threedvae.train.octree_node_trainer import OctreeNodeTrainer, OctreeNodeTrainerConfig
-from threedvae.utils.torch_compat import require_torch, torch
+from threedvae.utils.torch_compat import DataLoader, require_torch, torch
 
 
 def parse_args() -> argparse.Namespace:
@@ -34,6 +34,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument("--codebook-size", type=int, default=4096)
     parser.add_argument("--commitment-cost", type=float, default=0.25)
+    parser.add_argument("--quantizer-type", choices=("standard", "ema"), default="standard")
+    parser.add_argument("--ema-decay", type=float, default=0.99)
+    parser.add_argument(
+        "--init-codebook-from-data",
+        action="store_true",
+        help="Initialize the VQ codebook from pretrained encoder latents sampled from the training set.",
+    )
+    parser.add_argument("--codebook-init-max-samples", type=int, default=65536)
     parser.add_argument("--vq-weight", type=float, default=1.0)
     parser.add_argument("--rgb-weight", type=float, default=0.0)
     parser.add_argument("--occ-weight", type=float, default=0.1)
@@ -77,6 +85,8 @@ def main() -> None:
         raise ValueError("VAE checkpoint does not contain model_config.")
     model_config["codebook_size"] = args.codebook_size
     model_config["commitment_cost"] = args.commitment_cost
+    model_config["quantizer_type"] = args.quantizer_type
+    model_config["ema_decay"] = args.ema_decay
     model = OctreeNodeVQVAE(**model_config)
     missing, unexpected = model.load_state_dict(payload["model_state_dict"], strict=False)
     missing_without_quantizer = [key for key in missing if not key.startswith("quantizer.")]
@@ -119,6 +129,15 @@ def main() -> None:
     output_dir = Path(args.out)
     output_dir.mkdir(parents=True, exist_ok=True)
     write_run_manifest(output_dir, args, train_paths, val_paths, len(train_dataset), len(val_dataset) if val_dataset else 0)
+    if args.init_codebook_from_data:
+        initialize_codebook_from_dataset(
+            model,
+            train_dataset,
+            device=args.device,
+            batch_size=args.batch_size,
+            max_samples=args.codebook_init_max_samples,
+            seed=args.seed,
+        )
 
     trainer = OctreeNodeTrainer(
         model,
@@ -156,6 +175,63 @@ def build_octree_config(preset: str) -> OctreeBuildConfig:
     if preset == "object":
         return OctreeBuildConfig.with_default_object_semantics()
     return OctreeBuildConfig.with_default_carla_semantics()
+
+
+def initialize_codebook_from_dataset(
+    model: OctreeNodeVQVAE,
+    dataset,
+    *,
+    device: str,
+    batch_size: int,
+    max_samples: int,
+    seed: int,
+) -> None:
+    model.to(device)
+    model.eval()
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=0,
+        collate_fn=dataset.torch_collate,
+    )
+    latents = []
+    collected = 0
+    with torch.no_grad():
+        for batch in loader:
+            moved = {key: value.to(device) if hasattr(value, "to") else value for key, value in batch.items()}
+            mu, _, _ = model.encode(
+                xyz=moved["xyz"],
+                rgb=moved["rgb"],
+                node_center=moved["node_center_local"],
+                node_size=moved["node_size_local"],
+                level=moved["level"],
+                split_flag=moved["split_flag"],
+                child_index=moved["child_index"],
+                semantic_id=moved["semantic_id"],
+            )
+            latents.append(mu.detach().cpu())
+            collected += int(mu.shape[0])
+            if collected >= int(max_samples):
+                break
+    if not latents:
+        raise ValueError("Cannot initialize codebook from an empty training dataset.")
+    all_latents = torch.cat(latents, dim=0)[: int(max_samples)]
+    generator = torch.Generator(device="cpu")
+    generator.manual_seed(int(seed))
+    if all_latents.shape[0] >= model.codebook_size:
+        indices = torch.randperm(all_latents.shape[0], generator=generator)[: model.codebook_size]
+        codebook = all_latents[indices]
+    else:
+        repeats = (model.codebook_size + all_latents.shape[0] - 1) // all_latents.shape[0]
+        codebook = all_latents.repeat((repeats, 1))[: model.codebook_size]
+        codebook = codebook + 1e-4 * torch.randn(codebook.shape, generator=generator)
+    codebook = codebook.to(model.quantizer.codebook.weight.device)
+    model.quantizer.codebook.weight.data.copy_(codebook)
+    if hasattr(model.quantizer, "ema_code_sum"):
+        model.quantizer.ema_code_sum.data.copy_(codebook)
+    if hasattr(model.quantizer, "ema_cluster_size"):
+        model.quantizer.ema_cluster_size.data.fill_(1.0)
 
 
 if __name__ == "__main__":
