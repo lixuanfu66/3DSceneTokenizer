@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from threedvae.data.dataset import build_layered_udf_queries, build_udf_queries
+from threedvae.data.dataset import build_calibrated_surface_udf_queries, build_layered_udf_queries, build_udf_queries
 
 
 class QuerySamplingTest(unittest.TestCase):
@@ -39,6 +39,24 @@ class QuerySamplingTest(unittest.TestCase):
         self.assertEqual(udf.shape, (32, 1))
         self.assertTrue(np.all(udf >= 0.0))
         self.assertTrue(np.all(udf <= 0.25))
+
+    def test_calibrated_surface_udf_queries_have_expected_shape_and_range(self) -> None:
+        xyz = _make_points()
+        queries, udf = build_calibrated_surface_udf_queries(
+            xyz,
+            node_center=np.asarray([0.5, 0.5, 0.0], dtype=np.float32),
+            node_size=np.asarray([1.0, 1.0, 0.2], dtype=np.float32),
+            split_flag=0b011,
+            num_queries=32,
+            truncation_distance=0.25,
+            seed=3,
+        )
+
+        self.assertEqual(queries.shape, (32, 3))
+        self.assertEqual(udf.shape, (32, 1))
+        self.assertTrue(np.all(udf >= 0.0))
+        self.assertTrue(np.all(udf <= 0.25))
+        self.assertGreater(np.count_nonzero(udf < 0.01), 0)
 
 
 def _make_points() -> np.ndarray:

@@ -22,7 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--queries-per-node", type=int, default=128)
     parser.add_argument(
         "--query-strategy",
-        choices=("uniform", "layered"),
+        choices=("uniform", "layered", "calibrated_surface"),
         default="uniform",
         help="Sampling strategy for UDF supervision queries.",
     )
@@ -48,6 +48,19 @@ def parse_args() -> argparse.Namespace:
         help="Use soft UDF-derived occupancy targets by default; `hard` keeps the thresholded query_occ labels.",
     )
     parser.add_argument("--occ-soft-distance", type=float, default=0.03)
+    parser.add_argument(
+        "--udf-loss-mode",
+        choices=("smooth_l1", "bucket_weighted_smooth_l1"),
+        default="smooth_l1",
+        help="UDF regression loss. Weighted mode emphasizes near-surface query bands.",
+    )
+    parser.add_argument("--udf-near-weight", type=float, default=1.0)
+    parser.add_argument("--udf-band-weight", type=float, default=1.0)
+    parser.add_argument("--udf-mid-weight", type=float, default=1.0)
+    parser.add_argument("--udf-far-weight", type=float, default=1.0)
+    parser.add_argument("--udf-near-threshold", type=float, default=0.003)
+    parser.add_argument("--udf-band-threshold", type=float, default=0.01)
+    parser.add_argument("--udf-mid-threshold", type=float, default=0.03)
     parser.add_argument("--kl-weight", type=float, default=1e-4)
     parser.add_argument("--kl-warmup-ratio", type=float, default=0.1)
     parser.add_argument("--device", default="cpu")
@@ -56,6 +69,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--checkpoint-every", type=int, default=1)
     parser.add_argument("--include-leaf-only", action="store_true")
+    parser.add_argument("--min-node-points", type=int, default=1)
+    parser.add_argument("--octree-preset", choices=("carla", "object"), default="carla")
     return parser.parse_args()
 
 
@@ -63,7 +78,7 @@ def main() -> None:
     require_torch()
     args = parse_args()
     train_paths, val_paths = resolve_split(args)
-    octree_config = OctreeBuildConfig.with_default_carla_semantics()
+    octree_config = build_octree_config(args.octree_preset)
     train_dataset = build_node_dataset_from_ply_paths(
         train_paths,
         points_per_node=args.points_per_node,
@@ -73,6 +88,7 @@ def main() -> None:
         seed=args.seed,
         octree_config=octree_config,
         include_leaf_only=args.include_leaf_only,
+        min_node_points=args.min_node_points,
         query_strategy=args.query_strategy,
     )
     val_dataset = (
@@ -85,6 +101,7 @@ def main() -> None:
             seed=args.seed + 10_000,
             octree_config=octree_config,
             include_leaf_only=args.include_leaf_only,
+            min_node_points=args.min_node_points,
             query_strategy=args.query_strategy,
         )
         if val_paths
@@ -118,6 +135,14 @@ def main() -> None:
             occ_weight=args.occ_weight,
             occ_target_mode=args.occ_target_mode,
             occ_soft_distance=args.occ_soft_distance,
+            udf_loss_mode=args.udf_loss_mode,
+            udf_near_weight=args.udf_near_weight,
+            udf_band_weight=args.udf_band_weight,
+            udf_mid_weight=args.udf_mid_weight,
+            udf_far_weight=args.udf_far_weight,
+            udf_near_threshold=args.udf_near_threshold,
+            udf_band_threshold=args.udf_band_threshold,
+            udf_mid_threshold=args.udf_mid_threshold,
             num_workers=args.num_workers,
             checkpoint_every=args.checkpoint_every,
         ),
@@ -175,6 +200,12 @@ def write_run_manifest(
     with (output_dir / "run_manifest.json").open("w", encoding="utf-8", newline="\n") as handle:
         json.dump(manifest, handle, ensure_ascii=False, indent=2)
         handle.write("\n")
+
+
+def build_octree_config(preset: str) -> OctreeBuildConfig:
+    if preset == "object":
+        return OctreeBuildConfig.with_default_object_semantics()
+    return OctreeBuildConfig.with_default_carla_semantics()
 
 
 if __name__ == "__main__":

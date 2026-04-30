@@ -74,6 +74,34 @@ class OctreeNodeVAETest(unittest.TestCase):
         self.assertEqual(outputs.encoding_indices.shape, (2,))
         self.assertTrue(torch.isfinite(outputs.vq_loss))
 
+    def test_bucket_weighted_udf_loss_prioritizes_near_surface(self) -> None:
+        torch, _, _, _, _ = require_torch()
+        pred_udf = torch.tensor([[[0.020], [0.035]]])
+        target_udf = torch.tensor([[[0.000], [0.030]]])
+        common = {
+            "pred_udf": pred_udf,
+            "pred_occ_logits": torch.zeros(1, 2, 1),
+            "target_udf": target_udf,
+            "target_occ": torch.ones(1, 2, 1),
+            "mu": torch.zeros(1, 4),
+            "logvar": torch.zeros(1, 4),
+            "occ_weight": 0.0,
+            "kl_weight": 0.0,
+        }
+
+        baseline = octree_node_vae_loss(**common)
+        weighted = octree_node_vae_loss(
+            **common,
+            udf_loss_mode="bucket_weighted_smooth_l1",
+            udf_near_weight=8.0,
+            udf_band_weight=4.0,
+            udf_mid_weight=2.0,
+            udf_far_weight=1.0,
+        )
+
+        self.assertTrue(torch.isfinite(weighted.udf_loss))
+        self.assertGreater(float(weighted.udf_loss), float(baseline.udf_loss))
+
 
 def _make_batch(torch):
     return {

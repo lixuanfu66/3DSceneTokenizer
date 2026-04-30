@@ -1,0 +1,402 @@
+[
+  {
+    "split": "val",
+    "uid": "994aec4131c243dfa4cd2598e79eabaa",
+    "category": "ambulance",
+    "categories": [
+      "ambulance"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "mid",
+    "asset_path": "glbs/000-094/994aec4131c243dfa4cd2598e79eabaa.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-094/994aec4131c243dfa4cd2598e79eabaa.glb",
+    "asset_file": "000002_ambulance_994aec4131c243dfa4cd2598e79eabaa.glb",
+    "ply_file": "000002_ambulance_994aec4131c243dfa4cd2598e79eabaa.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 1,
+    "mean_rgb_channel_std": 37.2613410949707,
+    "local_index": 2
+  },
+  {
+    "split": "val",
+    "uid": "25fb43458b864c5d8a3e792e9cd218c6",
+    "category": "armchair",
+    "categories": [
+      "armchair"
+    ],
+    "score": 3,
+    "style": "scanned",
+    "density": "high",
+    "asset_path": "glbs/000-105/25fb43458b864c5d8a3e792e9cd218c6.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-105/25fb43458b864c5d8a3e792e9cd218c6.glb",
+    "asset_file": "000003_armchair_25fb43458b864c5d8a3e792e9cd218c6.glb",
+    "ply_file": "000003_armchair_25fb43458b864c5d8a3e792e9cd218c6.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 2,
+    "mean_rgb_channel_std": 34.488155364990234,
+    "local_index": 3
+  },
+  {
+    "split": "val",
+    "uid": "c99aaa2b602447b5b893f273291d987c",
+    "category": "armchair",
+    "categories": [
+      "armchair"
+    ],
+    "score": 3,
+    "style": "scanned",
+    "density": "high",
+    "asset_path": "glbs/000-152/c99aaa2b602447b5b893f273291d987c.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-152/c99aaa2b602447b5b893f273291d987c.glb",
+    "asset_file": "000004_armchair_c99aaa2b602447b5b893f273291d987c.glb",
+    "ply_file": "000004_armchair_c99aaa2b602447b5b893f273291d987c.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 3,
+    "mean_rgb_channel_std": 67.37042236328125,
+    "local_index": 4
+  },
+  {
+    "split": "val",
+    "uid": "b0aa0259376b435fab6645365a7fbd87",
+    "category": "bed",
+    "categories": [
+      "bed"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "high",
+    "asset_path": "glbs/000-146/b0aa0259376b435fab6645365a7fbd87.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-146/b0aa0259376b435fab6645365a7fbd87.glb",
+    "asset_file": "000005_bed_b0aa0259376b435fab6645365a7fbd87.glb",
+    "ply_file": "000005_bed_b0aa0259376b435fab6645365a7fbd87.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 4,
+    "mean_rgb_channel_std": 45.89642333984375,
+    "local_index": 5
+  },
+  {
+    "split": "val",
+    "uid": "3ed408980a9b4f9396a7f7c48ec50aa4",
+    "category": "bed",
+    "categories": [
+      "bed"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "mid",
+    "asset_path": "glbs/000-038/3ed408980a9b4f9396a7f7c48ec50aa4.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-038/3ed408980a9b4f9396a7f7c48ec50aa4.glb",
+    "asset_file": "000006_bed_3ed408980a9b4f9396a7f7c48ec50aa4.glb",
+    "ply_file": "000006_bed_3ed408980a9b4f9396a7f7c48ec50aa4.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 5,
+    "mean_rgb_channel_std": 19.227752685546875,
+    "local_index": 6
+  },
+  {
+    "split": "val",
+    "uid": "62bf8ec7430c45a98ed355b80345f607",
+    "category": "bicycle",
+    "categories": [
+      "bicycle"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "high",
+    "asset_path": "glbs/000-065/62bf8ec7430c45a98ed355b80345f607.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-065/62bf8ec7430c45a98ed355b80345f607.glb",
+    "asset_file": "000007_bicycle_62bf8ec7430c45a98ed355b80345f607.glb",
+    "ply_file": "000007_bicycle_62bf8ec7430c45a98ed355b80345f607.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 6,
+    "mean_rgb_channel_std": 30.172744750976562,
+    "local_index": 7
+  },
+  {
+    "split": "val",
+    "uid": "6ff55560e82c47b98804d0ca3843f7ba",
+    "category": "bicycle",
+    "categories": [
+      "bicycle"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "high",
+    "asset_path": "glbs/000-055/6ff55560e82c47b98804d0ca3843f7ba.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-055/6ff55560e82c47b98804d0ca3843f7ba.glb",
+    "asset_file": "000008_bicycle_6ff55560e82c47b98804d0ca3843f7ba.glb",
+    "ply_file": "000008_bicycle_6ff55560e82c47b98804d0ca3843f7ba.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 7,
+    "mean_rgb_channel_std": 74.16960906982422,
+    "local_index": 8
+  },
+  {
+    "split": "val",
+    "uid": "c1c1eb046635471b8911ac50e5b44014",
+    "category": "bookcase",
+    "categories": [
+      "bookcase"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "high",
+    "asset_path": "glbs/000-088/c1c1eb046635471b8911ac50e5b44014.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-088/c1c1eb046635471b8911ac50e5b44014.glb",
+    "asset_file": "000009_bookcase_c1c1eb046635471b8911ac50e5b44014.glb",
+    "ply_file": "000009_bookcase_c1c1eb046635471b8911ac50e5b44014.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 8,
+    "mean_rgb_channel_std": 66.2691650390625,
+    "local_index": 9
+  },
+  {
+    "split": "val",
+    "uid": "9f6ec1995c3f4b0bbd3a990033890f3c",
+    "category": "bookcase",
+    "categories": [
+      "bookcase"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "mid",
+    "asset_path": "glbs/000-045/9f6ec1995c3f4b0bbd3a990033890f3c.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-045/9f6ec1995c3f4b0bbd3a990033890f3c.glb",
+    "asset_file": "000010_bookcase_9f6ec1995c3f4b0bbd3a990033890f3c.glb",
+    "ply_file": "000010_bookcase_9f6ec1995c3f4b0bbd3a990033890f3c.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 9,
+    "mean_rgb_channel_std": 13.457595825195312,
+    "local_index": 10
+  },
+  {
+    "split": "val",
+    "uid": "ef9780f0cd274c28a614f1745dad00ff",
+    "category": "bus_(vehicle)",
+    "categories": [
+      "bus_(vehicle)"
+    ],
+    "score": 3,
+    "style": "scanned",
+    "density": "high",
+    "asset_path": "glbs/000-042/ef9780f0cd274c28a614f1745dad00ff.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-042/ef9780f0cd274c28a614f1745dad00ff.glb",
+    "asset_file": "000011_bus__vehicle_ef9780f0cd274c28a614f1745dad00ff.glb",
+    "ply_file": "000011_bus__vehicle_ef9780f0cd274c28a614f1745dad00ff.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 10,
+    "mean_rgb_channel_std": 62.10089111328125,
+    "local_index": 11
+  },
+  {
+    "split": "val",
+    "uid": "fdf39ca893a64368af45f82a6b6d68a4",
+    "category": "bus_(vehicle)",
+    "categories": [
+      "bus_(vehicle)"
+    ],
+    "score": 3,
+    "style": "scanned",
+    "density": "high",
+    "asset_path": "glbs/000-134/fdf39ca893a64368af45f82a6b6d68a4.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-134/fdf39ca893a64368af45f82a6b6d68a4.glb",
+    "asset_file": "000012_bus__vehicle_fdf39ca893a64368af45f82a6b6d68a4.glb",
+    "ply_file": "000012_bus__vehicle_fdf39ca893a64368af45f82a6b6d68a4.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 11,
+    "mean_rgb_channel_std": 45.4532470703125,
+    "local_index": 12
+  },
+  {
+    "split": "val",
+    "uid": "39498c5ba771460cad3caf12b2ac2f92",
+    "category": "cabinet",
+    "categories": [
+      "cabinet"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "mid",
+    "asset_path": "glbs/000-042/39498c5ba771460cad3caf12b2ac2f92.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-042/39498c5ba771460cad3caf12b2ac2f92.glb",
+    "asset_file": "000013_cabinet_39498c5ba771460cad3caf12b2ac2f92.glb",
+    "ply_file": "000013_cabinet_39498c5ba771460cad3caf12b2ac2f92.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 12,
+    "mean_rgb_channel_std": 26.934730529785156,
+    "local_index": 13
+  },
+  {
+    "split": "val",
+    "uid": "a9ed7b1e55824b37b7e5eabdba6545ff",
+    "category": "cabinet",
+    "categories": [
+      "cabinet"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "mid",
+    "asset_path": "glbs/000-152/a9ed7b1e55824b37b7e5eabdba6545ff.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-152/a9ed7b1e55824b37b7e5eabdba6545ff.glb",
+    "asset_file": "000014_cabinet_a9ed7b1e55824b37b7e5eabdba6545ff.glb",
+    "ply_file": "000014_cabinet_a9ed7b1e55824b37b7e5eabdba6545ff.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 13,
+    "mean_rgb_channel_std": 46.7326545715332,
+    "local_index": 14
+  },
+  {
+    "split": "val",
+    "uid": "9c7d73d35822450689fcf1b1710fa73d",
+    "category": "car_(automobile)",
+    "categories": [
+      "car_(automobile)"
+    ],
+    "score": 3,
+    "style": "scanned",
+    "density": "high",
+    "asset_path": "glbs/000-138/9c7d73d35822450689fcf1b1710fa73d.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-138/9c7d73d35822450689fcf1b1710fa73d.glb",
+    "asset_file": "000015_car__automobile_9c7d73d35822450689fcf1b1710fa73d.glb",
+    "ply_file": "000015_car__automobile_9c7d73d35822450689fcf1b1710fa73d.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 14,
+    "mean_rgb_channel_std": 47.216400146484375,
+    "local_index": 15
+  },
+  {
+    "split": "val",
+    "uid": "773d387e68c14127a0fb1101b0b9a751",
+    "category": "cellular_telephone",
+    "categories": [
+      "cellular_telephone"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "mid",
+    "asset_path": "glbs/000-054/773d387e68c14127a0fb1101b0b9a751.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-054/773d387e68c14127a0fb1101b0b9a751.glb",
+    "asset_file": "000017_cellular_telephone_773d387e68c14127a0fb1101b0b9a751.glb",
+    "ply_file": "000017_cellular_telephone_773d387e68c14127a0fb1101b0b9a751.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 16,
+    "mean_rgb_channel_std": 38.461124420166016,
+    "local_index": 17
+  },
+  {
+    "split": "val",
+    "uid": "76d14ed8675046d686019a770b21d8b3",
+    "category": "chair",
+    "categories": [
+      "chair"
+    ],
+    "score": 3,
+    "style": "scanned",
+    "density": "high",
+    "asset_path": "glbs/000-026/76d14ed8675046d686019a770b21d8b3.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-026/76d14ed8675046d686019a770b21d8b3.glb",
+    "asset_file": "000018_chair_76d14ed8675046d686019a770b21d8b3.glb",
+    "ply_file": "000018_chair_76d14ed8675046d686019a770b21d8b3.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 17,
+    "mean_rgb_channel_std": 37.23445129394531,
+    "local_index": 18
+  },
+  {
+    "split": "val",
+    "uid": "a9328e057fe049ff8b0c35489e0dfb8d",
+    "category": "chair",
+    "categories": [
+      "chair"
+    ],
+    "score": 3,
+    "style": "scanned",
+    "density": "high",
+    "asset_path": "glbs/000-004/a9328e057fe049ff8b0c35489e0dfb8d.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-004/a9328e057fe049ff8b0c35489e0dfb8d.glb",
+    "asset_file": "000019_chair_a9328e057fe049ff8b0c35489e0dfb8d.glb",
+    "ply_file": "000019_chair_a9328e057fe049ff8b0c35489e0dfb8d.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 18,
+    "mean_rgb_channel_std": 41.43168640136719,
+    "local_index": 19
+  },
+  {
+    "split": "val",
+    "uid": "8ca6793de7c8469397036f0f09cabe26",
+    "category": "computer_keyboard",
+    "categories": [
+      "computer_keyboard"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "mid",
+    "asset_path": "glbs/000-010/8ca6793de7c8469397036f0f09cabe26.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-010/8ca6793de7c8469397036f0f09cabe26.glb",
+    "asset_file": "000020_computer_keyboard_8ca6793de7c8469397036f0f09cabe26.glb",
+    "ply_file": "000020_computer_keyboard_8ca6793de7c8469397036f0f09cabe26.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 19,
+    "mean_rgb_channel_std": 110.3115463256836,
+    "local_index": 20
+  },
+  {
+    "split": "val",
+    "uid": "c7d79c5a304a476d87c8014a2f6565cf",
+    "category": "desk",
+    "categories": [
+      "desk"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "mid",
+    "asset_path": "glbs/000-086/c7d79c5a304a476d87c8014a2f6565cf.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-086/c7d79c5a304a476d87c8014a2f6565cf.glb",
+    "asset_file": "000021_desk_c7d79c5a304a476d87c8014a2f6565cf.glb",
+    "ply_file": "000021_desk_c7d79c5a304a476d87c8014a2f6565cf.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 20,
+    "mean_rgb_channel_std": 26.76955223083496,
+    "local_index": 21
+  },
+  {
+    "split": "val",
+    "uid": "175bdfac64854802a5d1383617580d5d",
+    "category": "dirt_bike",
+    "categories": [
+      "dirt_bike"
+    ],
+    "score": 3,
+    "style": "realistic",
+    "density": "high",
+    "asset_path": "glbs/000-156/175bdfac64854802a5d1383617580d5d.glb",
+    "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-156/175bdfac64854802a5d1383617580d5d.glb",
+    "asset_file": "000022_dirt_bike_175bdfac64854802a5d1383617580d5d.glb",
+    "ply_file": "000022_dirt_bike_175bdfac64854802a5d1383617580d5d.ply",
+    "points": 50000,
+    "semantic_id": 100,
+    "instance_id": 21,
+    "mean_rgb_channel_std": 70.48059844970703,
+    "local_index": 22
+  }
+]

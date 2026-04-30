@@ -1,0 +1,2105 @@
+{
+  "dataset": "objaversepp_task_relevant",
+  "source": {
+    "quality_annotations": "cindyxl/ObjaversePlusPlus annotated_800k.json",
+    "asset_paths": "allenai/objaverse object-paths.json.gz",
+    "categories": "allenai/objaverse lvis-annotations.json.gz"
+  },
+  "selection": {
+    "min_score": 3,
+    "styles": [
+      "realistic",
+      "scanned"
+    ],
+    "densities": [
+      "mid",
+      "high"
+    ],
+    "exclude": [
+      "is_scene",
+      "is_multi_object",
+      "is_transparent",
+      "is_single_color"
+    ],
+    "category_preset": "driving,indoor",
+    "points_per_object": 50000,
+    "normalize_unit_box": true,
+    "require_color_variance": true,
+    "min_color_std": 3.0
+  },
+  "splits": {
+    "train": {
+      "count": 80,
+      "category_count": {
+        "ambulance": 2,
+        "armchair": 1,
+        "bed": 2,
+        "bicycle": 1,
+        "bookcase": 2,
+        "bunk_bed": 1,
+        "bus_(vehicle)": 1,
+        "cabinet": 1,
+        "car_(automobile)": 2,
+        "cellular_telephone": 2,
+        "chair": 1,
+        "coffee_table": 2,
+        "computer_keyboard": 2,
+        "desk": 2,
+        "dining_table": 2,
+        "dirt_bike": 1,
+        "file_cabinet": 2,
+        "fire_engine": 2,
+        "garbage_truck": 2,
+        "golfcart": 2,
+        "lamp": 2,
+        "laptop_computer": 2,
+        "monitor_(computer_equipment) computer_monitor": 2,
+        "motor_scooter": 2,
+        "motorcycle": 2,
+        "mouse_(computer_equipment)": 2,
+        "person": 1,
+        "pickup_truck": 2,
+        "race_car": 2,
+        "rocking_chair": 2,
+        "router_(computer_equipment)": 2,
+        "school_bus": 2,
+        "signboard": 2,
+        "sofa": 2,
+        "sofa_bed": 2,
+        "stool": 2,
+        "stop_sign": 2,
+        "street_sign": 2,
+        "table_lamp": 2,
+        "telephone": 2,
+        "tow_truck": 2,
+        "traffic_light": 2,
+        "trailer_truck": 2,
+        "wheelchair": 2
+      }
+    },
+    "val": {
+      "count": 20,
+      "category_count": {
+        "ambulance": 1,
+        "armchair": 2,
+        "bed": 2,
+        "bicycle": 2,
+        "bookcase": 2,
+        "bus_(vehicle)": 2,
+        "cabinet": 2,
+        "car_(automobile)": 1,
+        "cellular_telephone": 1,
+        "chair": 2,
+        "computer_keyboard": 1,
+        "desk": 1,
+        "dirt_bike": 1
+      }
+    }
+  },
+  "objects": {
+    "train": [
+      {
+        "split": "train",
+        "uid": "a9d5d0a3655e4e0a85e1ae9ef4f88ce0",
+        "category": "ambulance",
+        "categories": [
+          "ambulance"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-116/a9d5d0a3655e4e0a85e1ae9ef4f88ce0.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-116/a9d5d0a3655e4e0a85e1ae9ef4f88ce0.glb",
+        "asset_file": "000000_ambulance_a9d5d0a3655e4e0a85e1ae9ef4f88ce0.glb",
+        "ply_file": "000000_ambulance_a9d5d0a3655e4e0a85e1ae9ef4f88ce0.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 1,
+        "mean_rgb_channel_std": 64.470458984375,
+        "local_index": 0
+      },
+      {
+        "split": "train",
+        "uid": "3ade5f8d1f68479fa054acc7d627939d",
+        "category": "ambulance",
+        "categories": [
+          "ambulance"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-085/3ade5f8d1f68479fa054acc7d627939d.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-085/3ade5f8d1f68479fa054acc7d627939d.glb",
+        "asset_file": "000001_ambulance_3ade5f8d1f68479fa054acc7d627939d.glb",
+        "ply_file": "000001_ambulance_3ade5f8d1f68479fa054acc7d627939d.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 2,
+        "mean_rgb_channel_std": 81.15714263916016,
+        "local_index": 1
+      },
+      {
+        "split": "train",
+        "uid": "10dfe487e2da4fee9b37f4ad23d4e87e",
+        "category": "armchair",
+        "categories": [
+          "armchair"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-144/10dfe487e2da4fee9b37f4ad23d4e87e.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-144/10dfe487e2da4fee9b37f4ad23d4e87e.glb",
+        "asset_file": "000003_armchair_10dfe487e2da4fee9b37f4ad23d4e87e.glb",
+        "ply_file": "000003_armchair_10dfe487e2da4fee9b37f4ad23d4e87e.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 4,
+        "mean_rgb_channel_std": 36.77235794067383,
+        "local_index": 3
+      },
+      {
+        "split": "train",
+        "uid": "3d118a9fd6e34ddab99cb0fab5540682",
+        "category": "bed",
+        "categories": [
+          "bed"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-134/3d118a9fd6e34ddab99cb0fab5540682.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-134/3d118a9fd6e34ddab99cb0fab5540682.glb",
+        "asset_file": "000004_bed_3d118a9fd6e34ddab99cb0fab5540682.glb",
+        "ply_file": "000004_bed_3d118a9fd6e34ddab99cb0fab5540682.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 5,
+        "mean_rgb_channel_std": 19.627397537231445,
+        "local_index": 4
+      },
+      {
+        "split": "train",
+        "uid": "a2b2645701c94fa49e65661806219c6b",
+        "category": "bed",
+        "categories": [
+          "bed"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-114/a2b2645701c94fa49e65661806219c6b.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-114/a2b2645701c94fa49e65661806219c6b.glb",
+        "asset_file": "000005_bed_a2b2645701c94fa49e65661806219c6b.glb",
+        "ply_file": "000005_bed_a2b2645701c94fa49e65661806219c6b.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 6,
+        "mean_rgb_channel_std": 16.00335693359375,
+        "local_index": 5
+      },
+      {
+        "split": "train",
+        "uid": "5297f7525763435c8ef2e97fd3a6d30d",
+        "category": "bicycle",
+        "categories": [
+          "bicycle"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-104/5297f7525763435c8ef2e97fd3a6d30d.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-104/5297f7525763435c8ef2e97fd3a6d30d.glb",
+        "asset_file": "000007_bicycle_5297f7525763435c8ef2e97fd3a6d30d.glb",
+        "ply_file": "000007_bicycle_5297f7525763435c8ef2e97fd3a6d30d.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 8,
+        "mean_rgb_channel_std": 112.44246673583984,
+        "local_index": 7
+      },
+      {
+        "split": "train",
+        "uid": "a917f1bb22124b63a4ac2938de40c46a",
+        "category": "bookcase",
+        "categories": [
+          "bookcase"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-146/a917f1bb22124b63a4ac2938de40c46a.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-146/a917f1bb22124b63a4ac2938de40c46a.glb",
+        "asset_file": "000008_bookcase_a917f1bb22124b63a4ac2938de40c46a.glb",
+        "ply_file": "000008_bookcase_a917f1bb22124b63a4ac2938de40c46a.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 9,
+        "mean_rgb_channel_std": 32.14571762084961,
+        "local_index": 8
+      },
+      {
+        "split": "train",
+        "uid": "72e0e0b03dec42dbbb67ae0d5b9ff0b0",
+        "category": "bookcase",
+        "categories": [
+          "bookcase"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-070/72e0e0b03dec42dbbb67ae0d5b9ff0b0.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-070/72e0e0b03dec42dbbb67ae0d5b9ff0b0.glb",
+        "asset_file": "000009_bookcase_72e0e0b03dec42dbbb67ae0d5b9ff0b0.glb",
+        "ply_file": "000009_bookcase_72e0e0b03dec42dbbb67ae0d5b9ff0b0.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 10,
+        "mean_rgb_channel_std": 42.70500183105469,
+        "local_index": 9
+      },
+      {
+        "split": "train",
+        "uid": "1ab0499f7a7746188eefe85c1f16594b",
+        "category": "bunk_bed",
+        "categories": [
+          "bunk_bed"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-133/1ab0499f7a7746188eefe85c1f16594b.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-133/1ab0499f7a7746188eefe85c1f16594b.glb",
+        "asset_file": "000010_bunk_bed_1ab0499f7a7746188eefe85c1f16594b.glb",
+        "ply_file": "000010_bunk_bed_1ab0499f7a7746188eefe85c1f16594b.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 11,
+        "mean_rgb_channel_std": 64.94873046875,
+        "local_index": 10
+      },
+      {
+        "split": "train",
+        "uid": "ab6e3c0001b148fdb49fc15ba08be149",
+        "category": "bus_(vehicle)",
+        "categories": [
+          "bus_(vehicle)"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-086/ab6e3c0001b148fdb49fc15ba08be149.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-086/ab6e3c0001b148fdb49fc15ba08be149.glb",
+        "asset_file": "000011_bus__vehicle_ab6e3c0001b148fdb49fc15ba08be149.glb",
+        "ply_file": "000011_bus__vehicle_ab6e3c0001b148fdb49fc15ba08be149.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 12,
+        "mean_rgb_channel_std": 44.05167770385742,
+        "local_index": 11
+      },
+      {
+        "split": "train",
+        "uid": "2e24c83d4d354f90abf93148ce57914d",
+        "category": "cabinet",
+        "categories": [
+          "cabinet"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-047/2e24c83d4d354f90abf93148ce57914d.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-047/2e24c83d4d354f90abf93148ce57914d.glb",
+        "asset_file": "000014_cabinet_2e24c83d4d354f90abf93148ce57914d.glb",
+        "ply_file": "000014_cabinet_2e24c83d4d354f90abf93148ce57914d.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 15,
+        "mean_rgb_channel_std": 10.610221862792969,
+        "local_index": 14
+      },
+      {
+        "split": "train",
+        "uid": "25c6874d173a4f6ca63e150bbd505686",
+        "category": "car_(automobile)",
+        "categories": [
+          "car_(automobile)"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-110/25c6874d173a4f6ca63e150bbd505686.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-110/25c6874d173a4f6ca63e150bbd505686.glb",
+        "asset_file": "000015_car__automobile_25c6874d173a4f6ca63e150bbd505686.glb",
+        "ply_file": "000015_car__automobile_25c6874d173a4f6ca63e150bbd505686.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 16,
+        "mean_rgb_channel_std": 64.4859390258789,
+        "local_index": 15
+      },
+      {
+        "split": "train",
+        "uid": "492c0b5ff7bc4046897caa01c23721da",
+        "category": "car_(automobile)",
+        "categories": [
+          "car_(automobile)"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-070/492c0b5ff7bc4046897caa01c23721da.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-070/492c0b5ff7bc4046897caa01c23721da.glb",
+        "asset_file": "000016_car__automobile_492c0b5ff7bc4046897caa01c23721da.glb",
+        "ply_file": "000016_car__automobile_492c0b5ff7bc4046897caa01c23721da.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 17,
+        "mean_rgb_channel_std": 25.853479385375977,
+        "local_index": 16
+      },
+      {
+        "split": "train",
+        "uid": "632781d61a6e4d2c96d19525bb21bd88",
+        "category": "cellular_telephone",
+        "categories": [
+          "cellular_telephone"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-110/632781d61a6e4d2c96d19525bb21bd88.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-110/632781d61a6e4d2c96d19525bb21bd88.glb",
+        "asset_file": "000017_cellular_telephone_632781d61a6e4d2c96d19525bb21bd88.glb",
+        "ply_file": "000017_cellular_telephone_632781d61a6e4d2c96d19525bb21bd88.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 18,
+        "mean_rgb_channel_std": 49.65180587768555,
+        "local_index": 17
+      },
+      {
+        "split": "train",
+        "uid": "3132aef4f917454ea9c9c2caa688e841",
+        "category": "cellular_telephone",
+        "categories": [
+          "cellular_telephone"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-148/3132aef4f917454ea9c9c2caa688e841.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-148/3132aef4f917454ea9c9c2caa688e841.glb",
+        "asset_file": "000018_cellular_telephone_3132aef4f917454ea9c9c2caa688e841.glb",
+        "ply_file": "000018_cellular_telephone_3132aef4f917454ea9c9c2caa688e841.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 19,
+        "mean_rgb_channel_std": 61.8435173034668,
+        "local_index": 18
+      },
+      {
+        "split": "train",
+        "uid": "1625701880c54b7d9f50e77455cef39b",
+        "category": "chair",
+        "categories": [
+          "chair"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-073/1625701880c54b7d9f50e77455cef39b.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-073/1625701880c54b7d9f50e77455cef39b.glb",
+        "asset_file": "000019_chair_1625701880c54b7d9f50e77455cef39b.glb",
+        "ply_file": "000019_chair_1625701880c54b7d9f50e77455cef39b.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 20,
+        "mean_rgb_channel_std": 14.866969108581543,
+        "local_index": 19
+      },
+      {
+        "split": "train",
+        "uid": "36f12a0c9c9149aab3dbe7fb35189fee",
+        "category": "coffee_table",
+        "categories": [
+          "coffee_table"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-092/36f12a0c9c9149aab3dbe7fb35189fee.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-092/36f12a0c9c9149aab3dbe7fb35189fee.glb",
+        "asset_file": "000021_coffee_table_36f12a0c9c9149aab3dbe7fb35189fee.glb",
+        "ply_file": "000021_coffee_table_36f12a0c9c9149aab3dbe7fb35189fee.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 22,
+        "mean_rgb_channel_std": 22.367921829223633,
+        "local_index": 21
+      },
+      {
+        "split": "train",
+        "uid": "4cc9c72932854d268551da5ec0c3bf36",
+        "category": "coffee_table",
+        "categories": [
+          "coffee_table"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-077/4cc9c72932854d268551da5ec0c3bf36.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-077/4cc9c72932854d268551da5ec0c3bf36.glb",
+        "asset_file": "000022_coffee_table_4cc9c72932854d268551da5ec0c3bf36.glb",
+        "ply_file": "000022_coffee_table_4cc9c72932854d268551da5ec0c3bf36.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 23,
+        "mean_rgb_channel_std": 15.572821617126465,
+        "local_index": 22
+      },
+      {
+        "split": "train",
+        "uid": "419cadde3c6e4909bd333366b4307de5",
+        "category": "computer_keyboard",
+        "categories": [
+          "computer_keyboard"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-110/419cadde3c6e4909bd333366b4307de5.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-110/419cadde3c6e4909bd333366b4307de5.glb",
+        "asset_file": "000023_computer_keyboard_419cadde3c6e4909bd333366b4307de5.glb",
+        "ply_file": "000023_computer_keyboard_419cadde3c6e4909bd333366b4307de5.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 24,
+        "mean_rgb_channel_std": 16.99448585510254,
+        "local_index": 23
+      },
+      {
+        "split": "train",
+        "uid": "b970e5d1289a492e9ccd207df8444210",
+        "category": "computer_keyboard",
+        "categories": [
+          "computer_keyboard"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-061/b970e5d1289a492e9ccd207df8444210.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-061/b970e5d1289a492e9ccd207df8444210.glb",
+        "asset_file": "000024_computer_keyboard_b970e5d1289a492e9ccd207df8444210.glb",
+        "ply_file": "000024_computer_keyboard_b970e5d1289a492e9ccd207df8444210.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 25,
+        "mean_rgb_channel_std": 45.49644088745117,
+        "local_index": 24
+      },
+      {
+        "split": "train",
+        "uid": "df1aa375f775420b90a20c1eaec9e016",
+        "category": "desk",
+        "categories": [
+          "desk"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-144/df1aa375f775420b90a20c1eaec9e016.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-144/df1aa375f775420b90a20c1eaec9e016.glb",
+        "asset_file": "000025_desk_df1aa375f775420b90a20c1eaec9e016.glb",
+        "ply_file": "000025_desk_df1aa375f775420b90a20c1eaec9e016.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 26,
+        "mean_rgb_channel_std": 15.22286605834961,
+        "local_index": 25
+      },
+      {
+        "split": "train",
+        "uid": "b6ea45bb0fa1462f8d49c59a14a87924",
+        "category": "desk",
+        "categories": [
+          "desk"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-040/b6ea45bb0fa1462f8d49c59a14a87924.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-040/b6ea45bb0fa1462f8d49c59a14a87924.glb",
+        "asset_file": "000026_desk_b6ea45bb0fa1462f8d49c59a14a87924.glb",
+        "ply_file": "000026_desk_b6ea45bb0fa1462f8d49c59a14a87924.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 27,
+        "mean_rgb_channel_std": 20.93915557861328,
+        "local_index": 26
+      },
+      {
+        "split": "train",
+        "uid": "931e2b1953304f2b88aa00776b5a3d36",
+        "category": "dining_table",
+        "categories": [
+          "dining_table"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-156/931e2b1953304f2b88aa00776b5a3d36.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-156/931e2b1953304f2b88aa00776b5a3d36.glb",
+        "asset_file": "000027_dining_table_931e2b1953304f2b88aa00776b5a3d36.glb",
+        "ply_file": "000027_dining_table_931e2b1953304f2b88aa00776b5a3d36.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 28,
+        "mean_rgb_channel_std": 8.68598747253418,
+        "local_index": 27
+      },
+      {
+        "split": "train",
+        "uid": "bea9da712f9e4a92b212968750fac650",
+        "category": "dining_table",
+        "categories": [
+          "dining_table"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-108/bea9da712f9e4a92b212968750fac650.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-108/bea9da712f9e4a92b212968750fac650.glb",
+        "asset_file": "000028_dining_table_bea9da712f9e4a92b212968750fac650.glb",
+        "ply_file": "000028_dining_table_bea9da712f9e4a92b212968750fac650.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 29,
+        "mean_rgb_channel_std": 15.457927703857422,
+        "local_index": 28
+      },
+      {
+        "split": "train",
+        "uid": "9d6ed9c71eb84b7ba54de403228e3f0b",
+        "category": "dirt_bike",
+        "categories": [
+          "dirt_bike"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-106/9d6ed9c71eb84b7ba54de403228e3f0b.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-106/9d6ed9c71eb84b7ba54de403228e3f0b.glb",
+        "asset_file": "000030_dirt_bike_9d6ed9c71eb84b7ba54de403228e3f0b.glb",
+        "ply_file": "000030_dirt_bike_9d6ed9c71eb84b7ba54de403228e3f0b.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 31,
+        "mean_rgb_channel_std": 72.51270294189453,
+        "local_index": 30
+      },
+      {
+        "split": "train",
+        "uid": "cd6f9016db8644129af1b6026f9e46bd",
+        "category": "file_cabinet",
+        "categories": [
+          "file_cabinet"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-133/cd6f9016db8644129af1b6026f9e46bd.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-133/cd6f9016db8644129af1b6026f9e46bd.glb",
+        "asset_file": "000031_file_cabinet_cd6f9016db8644129af1b6026f9e46bd.glb",
+        "ply_file": "000031_file_cabinet_cd6f9016db8644129af1b6026f9e46bd.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 32,
+        "mean_rgb_channel_std": 14.118550300598145,
+        "local_index": 31
+      },
+      {
+        "split": "train",
+        "uid": "2a542407ee1e4c9d94d466777082c89a",
+        "category": "file_cabinet",
+        "categories": [
+          "file_cabinet"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-025/2a542407ee1e4c9d94d466777082c89a.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-025/2a542407ee1e4c9d94d466777082c89a.glb",
+        "asset_file": "000032_file_cabinet_2a542407ee1e4c9d94d466777082c89a.glb",
+        "ply_file": "000032_file_cabinet_2a542407ee1e4c9d94d466777082c89a.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 33,
+        "mean_rgb_channel_std": 7.124212265014648,
+        "local_index": 32
+      },
+      {
+        "split": "train",
+        "uid": "e64c419f7f244831abc6ab40aeedcc03",
+        "category": "fire_engine",
+        "categories": [
+          "fire_engine"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-126/e64c419f7f244831abc6ab40aeedcc03.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-126/e64c419f7f244831abc6ab40aeedcc03.glb",
+        "asset_file": "000033_fire_engine_e64c419f7f244831abc6ab40aeedcc03.glb",
+        "ply_file": "000033_fire_engine_e64c419f7f244831abc6ab40aeedcc03.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 34,
+        "mean_rgb_channel_std": 57.055782318115234,
+        "local_index": 33
+      },
+      {
+        "split": "train",
+        "uid": "5b28b362e57e4e34b6df6ab2241ba1a4",
+        "category": "fire_engine",
+        "categories": [
+          "fire_engine"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-024/5b28b362e57e4e34b6df6ab2241ba1a4.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-024/5b28b362e57e4e34b6df6ab2241ba1a4.glb",
+        "asset_file": "000034_fire_engine_5b28b362e57e4e34b6df6ab2241ba1a4.glb",
+        "ply_file": "000034_fire_engine_5b28b362e57e4e34b6df6ab2241ba1a4.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 35,
+        "mean_rgb_channel_std": 61.109432220458984,
+        "local_index": 34
+      },
+      {
+        "split": "train",
+        "uid": "5d505fdbcc594cb3b3f1b30be8240ad7",
+        "category": "garbage_truck",
+        "categories": [
+          "garbage_truck"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-030/5d505fdbcc594cb3b3f1b30be8240ad7.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-030/5d505fdbcc594cb3b3f1b30be8240ad7.glb",
+        "asset_file": "000035_garbage_truck_5d505fdbcc594cb3b3f1b30be8240ad7.glb",
+        "ply_file": "000035_garbage_truck_5d505fdbcc594cb3b3f1b30be8240ad7.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 36,
+        "mean_rgb_channel_std": 71.49119567871094,
+        "local_index": 35
+      },
+      {
+        "split": "train",
+        "uid": "64fc8375cf954a6c8460a1fe428383a0",
+        "category": "garbage_truck",
+        "categories": [
+          "garbage_truck"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-132/64fc8375cf954a6c8460a1fe428383a0.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-132/64fc8375cf954a6c8460a1fe428383a0.glb",
+        "asset_file": "000036_garbage_truck_64fc8375cf954a6c8460a1fe428383a0.glb",
+        "ply_file": "000036_garbage_truck_64fc8375cf954a6c8460a1fe428383a0.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 37,
+        "mean_rgb_channel_std": 60.88419723510742,
+        "local_index": 36
+      },
+      {
+        "split": "train",
+        "uid": "4c47315a4ec34d21ab2302376be5eafd",
+        "category": "golfcart",
+        "categories": [
+          "golfcart"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-046/4c47315a4ec34d21ab2302376be5eafd.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-046/4c47315a4ec34d21ab2302376be5eafd.glb",
+        "asset_file": "000037_golfcart_4c47315a4ec34d21ab2302376be5eafd.glb",
+        "ply_file": "000037_golfcart_4c47315a4ec34d21ab2302376be5eafd.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 38,
+        "mean_rgb_channel_std": 80.74417877197266,
+        "local_index": 37
+      },
+      {
+        "split": "train",
+        "uid": "28c56facb0a94453b6a6e86a29f938d8",
+        "category": "golfcart",
+        "categories": [
+          "golfcart"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-032/28c56facb0a94453b6a6e86a29f938d8.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-032/28c56facb0a94453b6a6e86a29f938d8.glb",
+        "asset_file": "000038_golfcart_28c56facb0a94453b6a6e86a29f938d8.glb",
+        "ply_file": "000038_golfcart_28c56facb0a94453b6a6e86a29f938d8.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 39,
+        "mean_rgb_channel_std": 37.54246139526367,
+        "local_index": 38
+      },
+      {
+        "split": "train",
+        "uid": "305f482f30114fbc8649b4971e5b19ed",
+        "category": "lamp",
+        "categories": [
+          "lamp"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-151/305f482f30114fbc8649b4971e5b19ed.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-151/305f482f30114fbc8649b4971e5b19ed.glb",
+        "asset_file": "000040_lamp_305f482f30114fbc8649b4971e5b19ed.glb",
+        "ply_file": "000040_lamp_305f482f30114fbc8649b4971e5b19ed.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 41,
+        "mean_rgb_channel_std": 54.709415435791016,
+        "local_index": 40
+      },
+      {
+        "split": "train",
+        "uid": "46b4b4f592c54f04ae524d656f1e1d2d",
+        "category": "lamp",
+        "categories": [
+          "lamp"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-094/46b4b4f592c54f04ae524d656f1e1d2d.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-094/46b4b4f592c54f04ae524d656f1e1d2d.glb",
+        "asset_file": "000041_lamp_46b4b4f592c54f04ae524d656f1e1d2d.glb",
+        "ply_file": "000041_lamp_46b4b4f592c54f04ae524d656f1e1d2d.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 42,
+        "mean_rgb_channel_std": 49.88923645019531,
+        "local_index": 41
+      },
+      {
+        "split": "train",
+        "uid": "2cda50e73f69438598eabf8259e27cb7",
+        "category": "laptop_computer",
+        "categories": [
+          "laptop_computer"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-025/2cda50e73f69438598eabf8259e27cb7.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-025/2cda50e73f69438598eabf8259e27cb7.glb",
+        "asset_file": "000042_laptop_computer_2cda50e73f69438598eabf8259e27cb7.glb",
+        "ply_file": "000042_laptop_computer_2cda50e73f69438598eabf8259e27cb7.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 43,
+        "mean_rgb_channel_std": 31.967111587524414,
+        "local_index": 42
+      },
+      {
+        "split": "train",
+        "uid": "c76723abab6e4e2696bf7e3e1a27e861",
+        "category": "laptop_computer",
+        "categories": [
+          "laptop_computer"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-143/c76723abab6e4e2696bf7e3e1a27e861.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-143/c76723abab6e4e2696bf7e3e1a27e861.glb",
+        "asset_file": "000043_laptop_computer_c76723abab6e4e2696bf7e3e1a27e861.glb",
+        "ply_file": "000043_laptop_computer_c76723abab6e4e2696bf7e3e1a27e861.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 44,
+        "mean_rgb_channel_std": 77.00226593017578,
+        "local_index": 43
+      },
+      {
+        "split": "train",
+        "uid": "e21063cc530b4687a4e095c05ea35781",
+        "category": "monitor_(computer_equipment) computer_monitor",
+        "categories": [
+          "monitor_(computer_equipment) computer_monitor"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-145/e21063cc530b4687a4e095c05ea35781.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-145/e21063cc530b4687a4e095c05ea35781.glb",
+        "asset_file": "000044_monitor__computer_equipment_computer_monitor_e21063cc530b4687a4e095c05ea35781.glb",
+        "ply_file": "000044_monitor__computer_equipment_computer_monitor_e21063cc530b4687a4e095c05ea35781.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 45,
+        "mean_rgb_channel_std": 13.088101387023926,
+        "local_index": 44
+      },
+      {
+        "split": "train",
+        "uid": "fca9ab0c60c341a4a8d6ddf61459677d",
+        "category": "monitor_(computer_equipment) computer_monitor",
+        "categories": [
+          "monitor_(computer_equipment) computer_monitor"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-130/fca9ab0c60c341a4a8d6ddf61459677d.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-130/fca9ab0c60c341a4a8d6ddf61459677d.glb",
+        "asset_file": "000045_monitor__computer_equipment_computer_monitor_fca9ab0c60c341a4a8d6ddf61459677d.glb",
+        "ply_file": "000045_monitor__computer_equipment_computer_monitor_fca9ab0c60c341a4a8d6ddf61459677d.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 46,
+        "mean_rgb_channel_std": 44.762603759765625,
+        "local_index": 45
+      },
+      {
+        "split": "train",
+        "uid": "32f1cf6a13a64742883282e90ef68c8a",
+        "category": "motor_scooter",
+        "categories": [
+          "motor_scooter"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-054/32f1cf6a13a64742883282e90ef68c8a.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-054/32f1cf6a13a64742883282e90ef68c8a.glb",
+        "asset_file": "000046_motor_scooter_32f1cf6a13a64742883282e90ef68c8a.glb",
+        "ply_file": "000046_motor_scooter_32f1cf6a13a64742883282e90ef68c8a.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 47,
+        "mean_rgb_channel_std": 63.29173278808594,
+        "local_index": 46
+      },
+      {
+        "split": "train",
+        "uid": "f81271a178734da8953e49e5acffe334",
+        "category": "motor_scooter",
+        "categories": [
+          "motor_scooter"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-117/f81271a178734da8953e49e5acffe334.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-117/f81271a178734da8953e49e5acffe334.glb",
+        "asset_file": "000047_motor_scooter_f81271a178734da8953e49e5acffe334.glb",
+        "ply_file": "000047_motor_scooter_f81271a178734da8953e49e5acffe334.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 48,
+        "mean_rgb_channel_std": 62.11867904663086,
+        "local_index": 47
+      },
+      {
+        "split": "train",
+        "uid": "69c704a4679642dc9090b7b1caa1645b",
+        "category": "motorcycle",
+        "categories": [
+          "motorcycle"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-012/69c704a4679642dc9090b7b1caa1645b.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-012/69c704a4679642dc9090b7b1caa1645b.glb",
+        "asset_file": "000048_motorcycle_69c704a4679642dc9090b7b1caa1645b.glb",
+        "ply_file": "000048_motorcycle_69c704a4679642dc9090b7b1caa1645b.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 49,
+        "mean_rgb_channel_std": 47.2916374206543,
+        "local_index": 48
+      },
+      {
+        "split": "train",
+        "uid": "95a107fee2ab41bdb6e21bac72741781",
+        "category": "motorcycle",
+        "categories": [
+          "motorcycle"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-007/95a107fee2ab41bdb6e21bac72741781.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-007/95a107fee2ab41bdb6e21bac72741781.glb",
+        "asset_file": "000049_motorcycle_95a107fee2ab41bdb6e21bac72741781.glb",
+        "ply_file": "000049_motorcycle_95a107fee2ab41bdb6e21bac72741781.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 50,
+        "mean_rgb_channel_std": 39.20356369018555,
+        "local_index": 49
+      },
+      {
+        "split": "train",
+        "uid": "2b70993763034bef8587d3730c7ca8ff",
+        "category": "mouse_(computer_equipment)",
+        "categories": [
+          "mouse_(computer_equipment)"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-041/2b70993763034bef8587d3730c7ca8ff.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-041/2b70993763034bef8587d3730c7ca8ff.glb",
+        "asset_file": "000050_mouse__computer_equipment_2b70993763034bef8587d3730c7ca8ff.glb",
+        "ply_file": "000050_mouse__computer_equipment_2b70993763034bef8587d3730c7ca8ff.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 51,
+        "mean_rgb_channel_std": 36.76475524902344,
+        "local_index": 50
+      },
+      {
+        "split": "train",
+        "uid": "14670585f48a48738134523d6a5b17e6",
+        "category": "mouse_(computer_equipment)",
+        "categories": [
+          "mouse_(computer_equipment)"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-123/14670585f48a48738134523d6a5b17e6.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-123/14670585f48a48738134523d6a5b17e6.glb",
+        "asset_file": "000051_mouse__computer_equipment_14670585f48a48738134523d6a5b17e6.glb",
+        "ply_file": "000051_mouse__computer_equipment_14670585f48a48738134523d6a5b17e6.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 52,
+        "mean_rgb_channel_std": 50.15251159667969,
+        "local_index": 51
+      },
+      {
+        "split": "train",
+        "uid": "9fd4666fd5284fb1a578365d4d775a17",
+        "category": "person",
+        "categories": [
+          "person"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-070/9fd4666fd5284fb1a578365d4d775a17.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-070/9fd4666fd5284fb1a578365d4d775a17.glb",
+        "asset_file": "000052_person_9fd4666fd5284fb1a578365d4d775a17.glb",
+        "ply_file": "000052_person_9fd4666fd5284fb1a578365d4d775a17.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 53,
+        "mean_rgb_channel_std": 5.9453511238098145,
+        "local_index": 52
+      },
+      {
+        "split": "train",
+        "uid": "ab944e1b70474fa5b54e1403bfde3a2a",
+        "category": "pickup_truck",
+        "categories": [
+          "pickup_truck"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-040/ab944e1b70474fa5b54e1403bfde3a2a.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-040/ab944e1b70474fa5b54e1403bfde3a2a.glb",
+        "asset_file": "000054_pickup_truck_ab944e1b70474fa5b54e1403bfde3a2a.glb",
+        "ply_file": "000054_pickup_truck_ab944e1b70474fa5b54e1403bfde3a2a.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 55,
+        "mean_rgb_channel_std": 64.78714752197266,
+        "local_index": 54
+      },
+      {
+        "split": "train",
+        "uid": "12551977a2de417ba46852c9e559b0f5",
+        "category": "pickup_truck",
+        "categories": [
+          "pickup_truck"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-064/12551977a2de417ba46852c9e559b0f5.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-064/12551977a2de417ba46852c9e559b0f5.glb",
+        "asset_file": "000055_pickup_truck_12551977a2de417ba46852c9e559b0f5.glb",
+        "ply_file": "000055_pickup_truck_12551977a2de417ba46852c9e559b0f5.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 56,
+        "mean_rgb_channel_std": 56.59311294555664,
+        "local_index": 55
+      },
+      {
+        "split": "train",
+        "uid": "09a425963fe84282a7e498ee9bc534e8",
+        "category": "race_car",
+        "categories": [
+          "race_car"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-140/09a425963fe84282a7e498ee9bc534e8.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-140/09a425963fe84282a7e498ee9bc534e8.glb",
+        "asset_file": "000056_race_car_09a425963fe84282a7e498ee9bc534e8.glb",
+        "ply_file": "000056_race_car_09a425963fe84282a7e498ee9bc534e8.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 57,
+        "mean_rgb_channel_std": 51.3787841796875,
+        "local_index": 56
+      },
+      {
+        "split": "train",
+        "uid": "c1ac2337672e4616bcb006876c6de599",
+        "category": "race_car",
+        "categories": [
+          "race_car"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-145/c1ac2337672e4616bcb006876c6de599.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-145/c1ac2337672e4616bcb006876c6de599.glb",
+        "asset_file": "000057_race_car_c1ac2337672e4616bcb006876c6de599.glb",
+        "ply_file": "000057_race_car_c1ac2337672e4616bcb006876c6de599.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 58,
+        "mean_rgb_channel_std": 52.8610725402832,
+        "local_index": 57
+      },
+      {
+        "split": "train",
+        "uid": "aad16a6c11fd4321b515f3292f45844b",
+        "category": "rocking_chair",
+        "categories": [
+          "rocking_chair"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-140/aad16a6c11fd4321b515f3292f45844b.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-140/aad16a6c11fd4321b515f3292f45844b.glb",
+        "asset_file": "000058_rocking_chair_aad16a6c11fd4321b515f3292f45844b.glb",
+        "ply_file": "000058_rocking_chair_aad16a6c11fd4321b515f3292f45844b.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 59,
+        "mean_rgb_channel_std": 15.303547859191895,
+        "local_index": 58
+      },
+      {
+        "split": "train",
+        "uid": "bb0cefbeac234c268ea43fef6974d42b",
+        "category": "rocking_chair",
+        "categories": [
+          "rocking_chair"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-125/bb0cefbeac234c268ea43fef6974d42b.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-125/bb0cefbeac234c268ea43fef6974d42b.glb",
+        "asset_file": "000059_rocking_chair_bb0cefbeac234c268ea43fef6974d42b.glb",
+        "ply_file": "000059_rocking_chair_bb0cefbeac234c268ea43fef6974d42b.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 60,
+        "mean_rgb_channel_std": 18.08971405029297,
+        "local_index": 59
+      },
+      {
+        "split": "train",
+        "uid": "89f5bca8380d442687ccc0c1e970d75d",
+        "category": "router_(computer_equipment)",
+        "categories": [
+          "router_(computer_equipment)"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-135/89f5bca8380d442687ccc0c1e970d75d.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-135/89f5bca8380d442687ccc0c1e970d75d.glb",
+        "asset_file": "000060_router__computer_equipment_89f5bca8380d442687ccc0c1e970d75d.glb",
+        "ply_file": "000060_router__computer_equipment_89f5bca8380d442687ccc0c1e970d75d.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 61,
+        "mean_rgb_channel_std": 32.46607971191406,
+        "local_index": 60
+      },
+      {
+        "split": "train",
+        "uid": "d84ed4ce792a4fe0b8247c358a112c40",
+        "category": "router_(computer_equipment)",
+        "categories": [
+          "router_(computer_equipment)"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-120/d84ed4ce792a4fe0b8247c358a112c40.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-120/d84ed4ce792a4fe0b8247c358a112c40.glb",
+        "asset_file": "000061_router__computer_equipment_d84ed4ce792a4fe0b8247c358a112c40.glb",
+        "ply_file": "000061_router__computer_equipment_d84ed4ce792a4fe0b8247c358a112c40.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 62,
+        "mean_rgb_channel_std": 41.76065444946289,
+        "local_index": 61
+      },
+      {
+        "split": "train",
+        "uid": "3800ebe7b5c446d0bd576547e1013984",
+        "category": "school_bus",
+        "categories": [
+          "school_bus"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-145/3800ebe7b5c446d0bd576547e1013984.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-145/3800ebe7b5c446d0bd576547e1013984.glb",
+        "asset_file": "000062_school_bus_3800ebe7b5c446d0bd576547e1013984.glb",
+        "ply_file": "000062_school_bus_3800ebe7b5c446d0bd576547e1013984.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 63,
+        "mean_rgb_channel_std": 49.42425537109375,
+        "local_index": 62
+      },
+      {
+        "split": "train",
+        "uid": "392a362ca6e6453f8c29ffbf3fc20608",
+        "category": "school_bus",
+        "categories": [
+          "school_bus"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-124/392a362ca6e6453f8c29ffbf3fc20608.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-124/392a362ca6e6453f8c29ffbf3fc20608.glb",
+        "asset_file": "000063_school_bus_392a362ca6e6453f8c29ffbf3fc20608.glb",
+        "ply_file": "000063_school_bus_392a362ca6e6453f8c29ffbf3fc20608.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 64,
+        "mean_rgb_channel_std": 55.5909423828125,
+        "local_index": 63
+      },
+      {
+        "split": "train",
+        "uid": "1af66c3c8fbb4a0884e2acedfe37d74a",
+        "category": "signboard",
+        "categories": [
+          "signboard"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-000/1af66c3c8fbb4a0884e2acedfe37d74a.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-000/1af66c3c8fbb4a0884e2acedfe37d74a.glb",
+        "asset_file": "000064_signboard_1af66c3c8fbb4a0884e2acedfe37d74a.glb",
+        "ply_file": "000064_signboard_1af66c3c8fbb4a0884e2acedfe37d74a.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 65,
+        "mean_rgb_channel_std": 48.26759719848633,
+        "local_index": 64
+      },
+      {
+        "split": "train",
+        "uid": "6f4ccb0c7d344fc9989af1f62cddc266",
+        "category": "signboard",
+        "categories": [
+          "signboard"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-071/6f4ccb0c7d344fc9989af1f62cddc266.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-071/6f4ccb0c7d344fc9989af1f62cddc266.glb",
+        "asset_file": "000065_signboard_6f4ccb0c7d344fc9989af1f62cddc266.glb",
+        "ply_file": "000065_signboard_6f4ccb0c7d344fc9989af1f62cddc266.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 66,
+        "mean_rgb_channel_std": 80.3240737915039,
+        "local_index": 65
+      },
+      {
+        "split": "train",
+        "uid": "9dbe5e77569c482fa42d708c75154a29",
+        "category": "sofa",
+        "categories": [
+          "sofa"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-030/9dbe5e77569c482fa42d708c75154a29.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-030/9dbe5e77569c482fa42d708c75154a29.glb",
+        "asset_file": "000066_sofa_9dbe5e77569c482fa42d708c75154a29.glb",
+        "ply_file": "000066_sofa_9dbe5e77569c482fa42d708c75154a29.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 67,
+        "mean_rgb_channel_std": 7.9490227699279785,
+        "local_index": 66
+      },
+      {
+        "split": "train",
+        "uid": "bd6cd4c1504341d7ba1dc0d6678f3421",
+        "category": "sofa",
+        "categories": [
+          "sofa"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-025/bd6cd4c1504341d7ba1dc0d6678f3421.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-025/bd6cd4c1504341d7ba1dc0d6678f3421.glb",
+        "asset_file": "000067_sofa_bd6cd4c1504341d7ba1dc0d6678f3421.glb",
+        "ply_file": "000067_sofa_bd6cd4c1504341d7ba1dc0d6678f3421.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 68,
+        "mean_rgb_channel_std": 49.01057052612305,
+        "local_index": 67
+      },
+      {
+        "split": "train",
+        "uid": "1bf0a5e504584e2ea60ca6eedc4509e9",
+        "category": "sofa_bed",
+        "categories": [
+          "sofa_bed"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-046/1bf0a5e504584e2ea60ca6eedc4509e9.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-046/1bf0a5e504584e2ea60ca6eedc4509e9.glb",
+        "asset_file": "000068_sofa_bed_1bf0a5e504584e2ea60ca6eedc4509e9.glb",
+        "ply_file": "000068_sofa_bed_1bf0a5e504584e2ea60ca6eedc4509e9.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 69,
+        "mean_rgb_channel_std": 6.345033168792725,
+        "local_index": 68
+      },
+      {
+        "split": "train",
+        "uid": "534692224b1f45cebc9aff77fce0b92f",
+        "category": "sofa_bed",
+        "categories": [
+          "sofa_bed"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-111/534692224b1f45cebc9aff77fce0b92f.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-111/534692224b1f45cebc9aff77fce0b92f.glb",
+        "asset_file": "000069_sofa_bed_534692224b1f45cebc9aff77fce0b92f.glb",
+        "ply_file": "000069_sofa_bed_534692224b1f45cebc9aff77fce0b92f.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 70,
+        "mean_rgb_channel_std": 29.767404556274414,
+        "local_index": 69
+      },
+      {
+        "split": "train",
+        "uid": "36af1647d51e4a869af42b7127d64558",
+        "category": "stool",
+        "categories": [
+          "stool"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-004/36af1647d51e4a869af42b7127d64558.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-004/36af1647d51e4a869af42b7127d64558.glb",
+        "asset_file": "000070_stool_36af1647d51e4a869af42b7127d64558.glb",
+        "ply_file": "000070_stool_36af1647d51e4a869af42b7127d64558.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 71,
+        "mean_rgb_channel_std": 47.523006439208984,
+        "local_index": 70
+      },
+      {
+        "split": "train",
+        "uid": "609d5ff430be4527bb08aaaebeff8c00",
+        "category": "stool",
+        "categories": [
+          "stool"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-100/609d5ff430be4527bb08aaaebeff8c00.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-100/609d5ff430be4527bb08aaaebeff8c00.glb",
+        "asset_file": "000071_stool_609d5ff430be4527bb08aaaebeff8c00.glb",
+        "ply_file": "000071_stool_609d5ff430be4527bb08aaaebeff8c00.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 72,
+        "mean_rgb_channel_std": 26.75298500061035,
+        "local_index": 71
+      },
+      {
+        "split": "train",
+        "uid": "0cbb8b22e90f4c6f98e920ab03382a01",
+        "category": "stop_sign",
+        "categories": [
+          "stop_sign"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-132/0cbb8b22e90f4c6f98e920ab03382a01.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-132/0cbb8b22e90f4c6f98e920ab03382a01.glb",
+        "asset_file": "000072_stop_sign_0cbb8b22e90f4c6f98e920ab03382a01.glb",
+        "ply_file": "000072_stop_sign_0cbb8b22e90f4c6f98e920ab03382a01.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 73,
+        "mean_rgb_channel_std": 77.90059661865234,
+        "local_index": 72
+      },
+      {
+        "split": "train",
+        "uid": "6f35fee4bc654ce993fc3a67ec6401eb",
+        "category": "stop_sign",
+        "categories": [
+          "stop_sign"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-050/6f35fee4bc654ce993fc3a67ec6401eb.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-050/6f35fee4bc654ce993fc3a67ec6401eb.glb",
+        "asset_file": "000073_stop_sign_6f35fee4bc654ce993fc3a67ec6401eb.glb",
+        "ply_file": "000073_stop_sign_6f35fee4bc654ce993fc3a67ec6401eb.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 74,
+        "mean_rgb_channel_std": 62.19465255737305,
+        "local_index": 73
+      },
+      {
+        "split": "train",
+        "uid": "520ae757065b490aad46cfedf6f3e1f0",
+        "category": "street_sign",
+        "categories": [
+          "street_sign"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-044/520ae757065b490aad46cfedf6f3e1f0.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-044/520ae757065b490aad46cfedf6f3e1f0.glb",
+        "asset_file": "000074_street_sign_520ae757065b490aad46cfedf6f3e1f0.glb",
+        "ply_file": "000074_street_sign_520ae757065b490aad46cfedf6f3e1f0.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 75,
+        "mean_rgb_channel_std": 10.26072883605957,
+        "local_index": 74
+      },
+      {
+        "split": "train",
+        "uid": "c8c7210c40624b71bd5f4644fdaa60f3",
+        "category": "street_sign",
+        "categories": [
+          "street_sign"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-008/c8c7210c40624b71bd5f4644fdaa60f3.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-008/c8c7210c40624b71bd5f4644fdaa60f3.glb",
+        "asset_file": "000075_street_sign_c8c7210c40624b71bd5f4644fdaa60f3.glb",
+        "ply_file": "000075_street_sign_c8c7210c40624b71bd5f4644fdaa60f3.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 76,
+        "mean_rgb_channel_std": 15.461935997009277,
+        "local_index": 75
+      },
+      {
+        "split": "train",
+        "uid": "0061788e0741400c82289337a24af4f6",
+        "category": "table_lamp",
+        "categories": [
+          "table_lamp"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-000/0061788e0741400c82289337a24af4f6.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-000/0061788e0741400c82289337a24af4f6.glb",
+        "asset_file": "000078_table_lamp_0061788e0741400c82289337a24af4f6.glb",
+        "ply_file": "000078_table_lamp_0061788e0741400c82289337a24af4f6.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 79,
+        "mean_rgb_channel_std": 63.26435852050781,
+        "local_index": 78
+      },
+      {
+        "split": "train",
+        "uid": "ce5c3d5ec30d4527a886b396169609d1",
+        "category": "table_lamp",
+        "categories": [
+          "table_lamp"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-111/ce5c3d5ec30d4527a886b396169609d1.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-111/ce5c3d5ec30d4527a886b396169609d1.glb",
+        "asset_file": "000079_table_lamp_ce5c3d5ec30d4527a886b396169609d1.glb",
+        "ply_file": "000079_table_lamp_ce5c3d5ec30d4527a886b396169609d1.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 80,
+        "mean_rgb_channel_std": 83.3622817993164,
+        "local_index": 79
+      },
+      {
+        "split": "train",
+        "uid": "fd340792a4424819bbc3c27193e670e4",
+        "category": "telephone",
+        "categories": [
+          "telephone"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-064/fd340792a4424819bbc3c27193e670e4.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-064/fd340792a4424819bbc3c27193e670e4.glb",
+        "asset_file": "000080_telephone_fd340792a4424819bbc3c27193e670e4.glb",
+        "ply_file": "000080_telephone_fd340792a4424819bbc3c27193e670e4.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 81,
+        "mean_rgb_channel_std": 40.83204650878906,
+        "local_index": 80
+      },
+      {
+        "split": "train",
+        "uid": "0f074fef547f433586d9ae6f970285ec",
+        "category": "telephone",
+        "categories": [
+          "telephone"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-047/0f074fef547f433586d9ae6f970285ec.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-047/0f074fef547f433586d9ae6f970285ec.glb",
+        "asset_file": "000081_telephone_0f074fef547f433586d9ae6f970285ec.glb",
+        "ply_file": "000081_telephone_0f074fef547f433586d9ae6f970285ec.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 82,
+        "mean_rgb_channel_std": 66.25069427490234,
+        "local_index": 81
+      },
+      {
+        "split": "train",
+        "uid": "dff536c83cda4996a00a4cb9486715cc",
+        "category": "tow_truck",
+        "categories": [
+          "tow_truck"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-137/dff536c83cda4996a00a4cb9486715cc.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-137/dff536c83cda4996a00a4cb9486715cc.glb",
+        "asset_file": "000082_tow_truck_dff536c83cda4996a00a4cb9486715cc.glb",
+        "ply_file": "000082_tow_truck_dff536c83cda4996a00a4cb9486715cc.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 83,
+        "mean_rgb_channel_std": 45.79275131225586,
+        "local_index": 82
+      },
+      {
+        "split": "train",
+        "uid": "1af52d5fc62e4aab9fc547259da2ba49",
+        "category": "tow_truck",
+        "categories": [
+          "tow_truck"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-093/1af52d5fc62e4aab9fc547259da2ba49.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-093/1af52d5fc62e4aab9fc547259da2ba49.glb",
+        "asset_file": "000083_tow_truck_1af52d5fc62e4aab9fc547259da2ba49.glb",
+        "ply_file": "000083_tow_truck_1af52d5fc62e4aab9fc547259da2ba49.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 84,
+        "mean_rgb_channel_std": 53.747406005859375,
+        "local_index": 83
+      },
+      {
+        "split": "train",
+        "uid": "8e6be3d334f84619a97eb90c5b20369b",
+        "category": "traffic_light",
+        "categories": [
+          "traffic_light"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-104/8e6be3d334f84619a97eb90c5b20369b.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-104/8e6be3d334f84619a97eb90c5b20369b.glb",
+        "asset_file": "000084_traffic_light_8e6be3d334f84619a97eb90c5b20369b.glb",
+        "ply_file": "000084_traffic_light_8e6be3d334f84619a97eb90c5b20369b.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 85,
+        "mean_rgb_channel_std": 51.47713851928711,
+        "local_index": 84
+      },
+      {
+        "split": "train",
+        "uid": "b136ff21d67643a09fa9bc96e3f0fae3",
+        "category": "traffic_light",
+        "categories": [
+          "traffic_light"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-097/b136ff21d67643a09fa9bc96e3f0fae3.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-097/b136ff21d67643a09fa9bc96e3f0fae3.glb",
+        "asset_file": "000085_traffic_light_b136ff21d67643a09fa9bc96e3f0fae3.glb",
+        "ply_file": "000085_traffic_light_b136ff21d67643a09fa9bc96e3f0fae3.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 86,
+        "mean_rgb_channel_std": 26.48347282409668,
+        "local_index": 85
+      },
+      {
+        "split": "train",
+        "uid": "15a06d5b503c44209aab85d579f422d0",
+        "category": "trailer_truck",
+        "categories": [
+          "trailer_truck"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-093/15a06d5b503c44209aab85d579f422d0.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-093/15a06d5b503c44209aab85d579f422d0.glb",
+        "asset_file": "000086_trailer_truck_15a06d5b503c44209aab85d579f422d0.glb",
+        "ply_file": "000086_trailer_truck_15a06d5b503c44209aab85d579f422d0.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 87,
+        "mean_rgb_channel_std": 55.41401672363281,
+        "local_index": 86
+      },
+      {
+        "split": "train",
+        "uid": "36c1afefee604a88ae8b8cd7ca2a7c09",
+        "category": "trailer_truck",
+        "categories": [
+          "trailer_truck"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-092/36c1afefee604a88ae8b8cd7ca2a7c09.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-092/36c1afefee604a88ae8b8cd7ca2a7c09.glb",
+        "asset_file": "000087_trailer_truck_36c1afefee604a88ae8b8cd7ca2a7c09.glb",
+        "ply_file": "000087_trailer_truck_36c1afefee604a88ae8b8cd7ca2a7c09.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 88,
+        "mean_rgb_channel_std": 58.1783447265625,
+        "local_index": 87
+      },
+      {
+        "split": "train",
+        "uid": "050649b4b5e642f0a8554b29cf22033b",
+        "category": "wheelchair",
+        "categories": [
+          "wheelchair"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-000/050649b4b5e642f0a8554b29cf22033b.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-000/050649b4b5e642f0a8554b29cf22033b.glb",
+        "asset_file": "000090_wheelchair_050649b4b5e642f0a8554b29cf22033b.glb",
+        "ply_file": "000090_wheelchair_050649b4b5e642f0a8554b29cf22033b.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 91,
+        "mean_rgb_channel_std": 41.71664047241211,
+        "local_index": 90
+      },
+      {
+        "split": "train",
+        "uid": "24d189a5d7b5420591d4153162a2d1b0",
+        "category": "wheelchair",
+        "categories": [
+          "wheelchair"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-089/24d189a5d7b5420591d4153162a2d1b0.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-089/24d189a5d7b5420591d4153162a2d1b0.glb",
+        "asset_file": "000091_wheelchair_24d189a5d7b5420591d4153162a2d1b0.glb",
+        "ply_file": "000091_wheelchair_24d189a5d7b5420591d4153162a2d1b0.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 92,
+        "mean_rgb_channel_std": 45.395843505859375,
+        "local_index": 91
+      }
+    ],
+    "val": [
+      {
+        "split": "val",
+        "uid": "994aec4131c243dfa4cd2598e79eabaa",
+        "category": "ambulance",
+        "categories": [
+          "ambulance"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-094/994aec4131c243dfa4cd2598e79eabaa.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-094/994aec4131c243dfa4cd2598e79eabaa.glb",
+        "asset_file": "000002_ambulance_994aec4131c243dfa4cd2598e79eabaa.glb",
+        "ply_file": "000002_ambulance_994aec4131c243dfa4cd2598e79eabaa.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 1,
+        "mean_rgb_channel_std": 37.2613410949707,
+        "local_index": 2
+      },
+      {
+        "split": "val",
+        "uid": "25fb43458b864c5d8a3e792e9cd218c6",
+        "category": "armchair",
+        "categories": [
+          "armchair"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-105/25fb43458b864c5d8a3e792e9cd218c6.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-105/25fb43458b864c5d8a3e792e9cd218c6.glb",
+        "asset_file": "000003_armchair_25fb43458b864c5d8a3e792e9cd218c6.glb",
+        "ply_file": "000003_armchair_25fb43458b864c5d8a3e792e9cd218c6.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 2,
+        "mean_rgb_channel_std": 34.488155364990234,
+        "local_index": 3
+      },
+      {
+        "split": "val",
+        "uid": "c99aaa2b602447b5b893f273291d987c",
+        "category": "armchair",
+        "categories": [
+          "armchair"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-152/c99aaa2b602447b5b893f273291d987c.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-152/c99aaa2b602447b5b893f273291d987c.glb",
+        "asset_file": "000004_armchair_c99aaa2b602447b5b893f273291d987c.glb",
+        "ply_file": "000004_armchair_c99aaa2b602447b5b893f273291d987c.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 3,
+        "mean_rgb_channel_std": 67.37042236328125,
+        "local_index": 4
+      },
+      {
+        "split": "val",
+        "uid": "b0aa0259376b435fab6645365a7fbd87",
+        "category": "bed",
+        "categories": [
+          "bed"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-146/b0aa0259376b435fab6645365a7fbd87.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-146/b0aa0259376b435fab6645365a7fbd87.glb",
+        "asset_file": "000005_bed_b0aa0259376b435fab6645365a7fbd87.glb",
+        "ply_file": "000005_bed_b0aa0259376b435fab6645365a7fbd87.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 4,
+        "mean_rgb_channel_std": 45.89642333984375,
+        "local_index": 5
+      },
+      {
+        "split": "val",
+        "uid": "3ed408980a9b4f9396a7f7c48ec50aa4",
+        "category": "bed",
+        "categories": [
+          "bed"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-038/3ed408980a9b4f9396a7f7c48ec50aa4.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-038/3ed408980a9b4f9396a7f7c48ec50aa4.glb",
+        "asset_file": "000006_bed_3ed408980a9b4f9396a7f7c48ec50aa4.glb",
+        "ply_file": "000006_bed_3ed408980a9b4f9396a7f7c48ec50aa4.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 5,
+        "mean_rgb_channel_std": 19.227752685546875,
+        "local_index": 6
+      },
+      {
+        "split": "val",
+        "uid": "62bf8ec7430c45a98ed355b80345f607",
+        "category": "bicycle",
+        "categories": [
+          "bicycle"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-065/62bf8ec7430c45a98ed355b80345f607.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-065/62bf8ec7430c45a98ed355b80345f607.glb",
+        "asset_file": "000007_bicycle_62bf8ec7430c45a98ed355b80345f607.glb",
+        "ply_file": "000007_bicycle_62bf8ec7430c45a98ed355b80345f607.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 6,
+        "mean_rgb_channel_std": 30.172744750976562,
+        "local_index": 7
+      },
+      {
+        "split": "val",
+        "uid": "6ff55560e82c47b98804d0ca3843f7ba",
+        "category": "bicycle",
+        "categories": [
+          "bicycle"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-055/6ff55560e82c47b98804d0ca3843f7ba.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-055/6ff55560e82c47b98804d0ca3843f7ba.glb",
+        "asset_file": "000008_bicycle_6ff55560e82c47b98804d0ca3843f7ba.glb",
+        "ply_file": "000008_bicycle_6ff55560e82c47b98804d0ca3843f7ba.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 7,
+        "mean_rgb_channel_std": 74.16960906982422,
+        "local_index": 8
+      },
+      {
+        "split": "val",
+        "uid": "c1c1eb046635471b8911ac50e5b44014",
+        "category": "bookcase",
+        "categories": [
+          "bookcase"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-088/c1c1eb046635471b8911ac50e5b44014.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-088/c1c1eb046635471b8911ac50e5b44014.glb",
+        "asset_file": "000009_bookcase_c1c1eb046635471b8911ac50e5b44014.glb",
+        "ply_file": "000009_bookcase_c1c1eb046635471b8911ac50e5b44014.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 8,
+        "mean_rgb_channel_std": 66.2691650390625,
+        "local_index": 9
+      },
+      {
+        "split": "val",
+        "uid": "9f6ec1995c3f4b0bbd3a990033890f3c",
+        "category": "bookcase",
+        "categories": [
+          "bookcase"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-045/9f6ec1995c3f4b0bbd3a990033890f3c.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-045/9f6ec1995c3f4b0bbd3a990033890f3c.glb",
+        "asset_file": "000010_bookcase_9f6ec1995c3f4b0bbd3a990033890f3c.glb",
+        "ply_file": "000010_bookcase_9f6ec1995c3f4b0bbd3a990033890f3c.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 9,
+        "mean_rgb_channel_std": 13.457595825195312,
+        "local_index": 10
+      },
+      {
+        "split": "val",
+        "uid": "ef9780f0cd274c28a614f1745dad00ff",
+        "category": "bus_(vehicle)",
+        "categories": [
+          "bus_(vehicle)"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-042/ef9780f0cd274c28a614f1745dad00ff.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-042/ef9780f0cd274c28a614f1745dad00ff.glb",
+        "asset_file": "000011_bus__vehicle_ef9780f0cd274c28a614f1745dad00ff.glb",
+        "ply_file": "000011_bus__vehicle_ef9780f0cd274c28a614f1745dad00ff.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 10,
+        "mean_rgb_channel_std": 62.10089111328125,
+        "local_index": 11
+      },
+      {
+        "split": "val",
+        "uid": "fdf39ca893a64368af45f82a6b6d68a4",
+        "category": "bus_(vehicle)",
+        "categories": [
+          "bus_(vehicle)"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-134/fdf39ca893a64368af45f82a6b6d68a4.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-134/fdf39ca893a64368af45f82a6b6d68a4.glb",
+        "asset_file": "000012_bus__vehicle_fdf39ca893a64368af45f82a6b6d68a4.glb",
+        "ply_file": "000012_bus__vehicle_fdf39ca893a64368af45f82a6b6d68a4.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 11,
+        "mean_rgb_channel_std": 45.4532470703125,
+        "local_index": 12
+      },
+      {
+        "split": "val",
+        "uid": "39498c5ba771460cad3caf12b2ac2f92",
+        "category": "cabinet",
+        "categories": [
+          "cabinet"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-042/39498c5ba771460cad3caf12b2ac2f92.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-042/39498c5ba771460cad3caf12b2ac2f92.glb",
+        "asset_file": "000013_cabinet_39498c5ba771460cad3caf12b2ac2f92.glb",
+        "ply_file": "000013_cabinet_39498c5ba771460cad3caf12b2ac2f92.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 12,
+        "mean_rgb_channel_std": 26.934730529785156,
+        "local_index": 13
+      },
+      {
+        "split": "val",
+        "uid": "a9ed7b1e55824b37b7e5eabdba6545ff",
+        "category": "cabinet",
+        "categories": [
+          "cabinet"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-152/a9ed7b1e55824b37b7e5eabdba6545ff.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-152/a9ed7b1e55824b37b7e5eabdba6545ff.glb",
+        "asset_file": "000014_cabinet_a9ed7b1e55824b37b7e5eabdba6545ff.glb",
+        "ply_file": "000014_cabinet_a9ed7b1e55824b37b7e5eabdba6545ff.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 13,
+        "mean_rgb_channel_std": 46.7326545715332,
+        "local_index": 14
+      },
+      {
+        "split": "val",
+        "uid": "9c7d73d35822450689fcf1b1710fa73d",
+        "category": "car_(automobile)",
+        "categories": [
+          "car_(automobile)"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-138/9c7d73d35822450689fcf1b1710fa73d.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-138/9c7d73d35822450689fcf1b1710fa73d.glb",
+        "asset_file": "000015_car__automobile_9c7d73d35822450689fcf1b1710fa73d.glb",
+        "ply_file": "000015_car__automobile_9c7d73d35822450689fcf1b1710fa73d.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 14,
+        "mean_rgb_channel_std": 47.216400146484375,
+        "local_index": 15
+      },
+      {
+        "split": "val",
+        "uid": "773d387e68c14127a0fb1101b0b9a751",
+        "category": "cellular_telephone",
+        "categories": [
+          "cellular_telephone"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-054/773d387e68c14127a0fb1101b0b9a751.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-054/773d387e68c14127a0fb1101b0b9a751.glb",
+        "asset_file": "000017_cellular_telephone_773d387e68c14127a0fb1101b0b9a751.glb",
+        "ply_file": "000017_cellular_telephone_773d387e68c14127a0fb1101b0b9a751.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 16,
+        "mean_rgb_channel_std": 38.461124420166016,
+        "local_index": 17
+      },
+      {
+        "split": "val",
+        "uid": "76d14ed8675046d686019a770b21d8b3",
+        "category": "chair",
+        "categories": [
+          "chair"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-026/76d14ed8675046d686019a770b21d8b3.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-026/76d14ed8675046d686019a770b21d8b3.glb",
+        "asset_file": "000018_chair_76d14ed8675046d686019a770b21d8b3.glb",
+        "ply_file": "000018_chair_76d14ed8675046d686019a770b21d8b3.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 17,
+        "mean_rgb_channel_std": 37.23445129394531,
+        "local_index": 18
+      },
+      {
+        "split": "val",
+        "uid": "a9328e057fe049ff8b0c35489e0dfb8d",
+        "category": "chair",
+        "categories": [
+          "chair"
+        ],
+        "score": 3,
+        "style": "scanned",
+        "density": "high",
+        "asset_path": "glbs/000-004/a9328e057fe049ff8b0c35489e0dfb8d.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-004/a9328e057fe049ff8b0c35489e0dfb8d.glb",
+        "asset_file": "000019_chair_a9328e057fe049ff8b0c35489e0dfb8d.glb",
+        "ply_file": "000019_chair_a9328e057fe049ff8b0c35489e0dfb8d.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 18,
+        "mean_rgb_channel_std": 41.43168640136719,
+        "local_index": 19
+      },
+      {
+        "split": "val",
+        "uid": "8ca6793de7c8469397036f0f09cabe26",
+        "category": "computer_keyboard",
+        "categories": [
+          "computer_keyboard"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-010/8ca6793de7c8469397036f0f09cabe26.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-010/8ca6793de7c8469397036f0f09cabe26.glb",
+        "asset_file": "000020_computer_keyboard_8ca6793de7c8469397036f0f09cabe26.glb",
+        "ply_file": "000020_computer_keyboard_8ca6793de7c8469397036f0f09cabe26.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 19,
+        "mean_rgb_channel_std": 110.3115463256836,
+        "local_index": 20
+      },
+      {
+        "split": "val",
+        "uid": "c7d79c5a304a476d87c8014a2f6565cf",
+        "category": "desk",
+        "categories": [
+          "desk"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "mid",
+        "asset_path": "glbs/000-086/c7d79c5a304a476d87c8014a2f6565cf.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-086/c7d79c5a304a476d87c8014a2f6565cf.glb",
+        "asset_file": "000021_desk_c7d79c5a304a476d87c8014a2f6565cf.glb",
+        "ply_file": "000021_desk_c7d79c5a304a476d87c8014a2f6565cf.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 20,
+        "mean_rgb_channel_std": 26.76955223083496,
+        "local_index": 21
+      },
+      {
+        "split": "val",
+        "uid": "175bdfac64854802a5d1383617580d5d",
+        "category": "dirt_bike",
+        "categories": [
+          "dirt_bike"
+        ],
+        "score": 3,
+        "style": "realistic",
+        "density": "high",
+        "asset_path": "glbs/000-156/175bdfac64854802a5d1383617580d5d.glb",
+        "asset_url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-156/175bdfac64854802a5d1383617580d5d.glb",
+        "asset_file": "000022_dirt_bike_175bdfac64854802a5d1383617580d5d.glb",
+        "ply_file": "000022_dirt_bike_175bdfac64854802a5d1383617580d5d.ply",
+        "points": 50000,
+        "semantic_id": 100,
+        "instance_id": 21,
+        "mean_rgb_channel_std": 70.48059844970703,
+        "local_index": 22
+      }
+    ]
+  }
+}

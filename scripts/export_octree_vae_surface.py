@@ -22,6 +22,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ply-dir", required=True)
     parser.add_argument("--out", required=True)
     parser.add_argument("--device", default="cpu")
+    parser.add_argument("--octree-preset", choices=("carla", "object"), default="carla")
+    parser.add_argument("--include-leaf-only", action="store_true")
+    parser.add_argument("--min-node-points", type=int, default=1)
     parser.add_argument("--points-per-node", type=int, default=32)
     parser.add_argument("--candidates-per-node", type=int, default=512)
     parser.add_argument("--adaptive-candidates", action="store_true")
@@ -31,6 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--candidate-bucket-size", type=int, default=128)
     parser.add_argument("--candidate-strategy", choices=("uniform", "hybrid"), default="hybrid")
     parser.add_argument("--surface-threshold", type=float, default=0.03)
+    parser.add_argument("--color-mode", choices=("udf", "predicted-rgb"), default="udf")
     parser.add_argument("--topk-per-node", type=int, default=4)
     parser.add_argument("--topk-max-udf", type=float, default=0.08)
     parser.add_argument("--batch-nodes", type=int, default=64)
@@ -46,8 +50,13 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     ply_paths = sorted(str(path) for path in Path(args.ply_dir).glob("*.ply"))
-    octree_config = OctreeBuildConfig.with_default_carla_semantics()
-    samples = collect_node_samples_from_ply_paths(ply_paths, octree_config=octree_config)
+    octree_config = build_octree_config(args.octree_preset)
+    samples = collect_node_samples_from_ply_paths(
+        ply_paths,
+        octree_config=octree_config,
+        include_leaf_only=args.include_leaf_only,
+        min_node_points=args.min_node_points,
+    )
     pose_lookup = build_pose_lookup(ply_paths)
 
     payload = torch.load(args.checkpoint, map_location=args.device)
@@ -67,6 +76,9 @@ def main() -> None:
                 xyz=torch.as_tensor(batch["xyz"], dtype=torch.float32, device=args.device),
                 rgb=torch.as_tensor(batch["rgb"], dtype=torch.float32, device=args.device),
                 query_xyz=torch.as_tensor(batch["query_xyz"], dtype=torch.float32, device=args.device),
+                rgb_query_xyz=torch.as_tensor(batch["query_xyz"], dtype=torch.float32, device=args.device)
+                if model.config.predict_rgb
+                else None,
                 node_center=torch.as_tensor(batch["node_center_local"], dtype=torch.float32, device=args.device),
                 node_size=torch.as_tensor(batch["node_size_local"], dtype=torch.float32, device=args.device),
                 level=torch.as_tensor(batch["level"], dtype=torch.int64, device=args.device),
@@ -75,6 +87,7 @@ def main() -> None:
                 semantic_id=torch.as_tensor(batch["semantic_id"], dtype=torch.int64, device=args.device),
             )
         pred_udf = outputs.udf.detach().cpu().numpy()[..., 0]
+        pred_rgb = outputs.rgb.detach().cpu().numpy() if outputs.rgb is not None else None
         for item_index, sample in enumerate(batch_samples):
             frame_id = sample.frame_id
             stats = frame_stats[frame_id]
@@ -96,9 +109,13 @@ def main() -> None:
             pose = pose_lookup[(frame_id, int(sample.instance_id))]
             query_ego = local_to_ego(query_local[keep_mask], pose)
             pred_kept = pred_udf[item_index][keep_mask]
+            rgb_kept = pred_rgb[item_index][keep_mask] if pred_rgb is not None else None
             kind_kept = keep_kind[keep_mask]
-            for point, pred_value, keep_value in zip(query_ego, pred_kept, kind_kept):
-                color = color_from_udf(float(pred_value), args.surface_threshold, args.topk_max_udf)
+            for row_index, (point, pred_value, keep_value) in enumerate(zip(query_ego, pred_kept, kind_kept)):
+                if args.color_mode == "predicted-rgb" and rgb_kept is not None:
+                    color = tuple(int(np.clip(round(float(channel) * 255.0), 0, 255)) for channel in rgb_kept[row_index])
+                else:
+                    color = color_from_udf(float(pred_value), args.surface_threshold, args.topk_max_udf)
                 frame_rows[frame_id].append(
                     (
                         float(point[0]),
@@ -118,7 +135,11 @@ def main() -> None:
     summary = {
         "checkpoint": args.checkpoint,
         "ply_count": len(ply_paths),
+        "octree_preset": args.octree_preset,
+        "include_leaf_only": bool(args.include_leaf_only),
+        "min_node_points": int(args.min_node_points),
         "candidate_strategy": args.candidate_strategy,
+        "color_mode": args.color_mode,
         "points_per_node": args.points_per_node,
         "candidates_per_node": args.candidates_per_node,
         "adaptive_candidates": bool(args.adaptive_candidates),
@@ -283,6 +304,12 @@ def candidate_count_for_node(node_size: np.ndarray, args: argparse.Namespace) ->
     bucket = max(1, int(args.candidate_bucket_size))
     rounded = int(round(raw / bucket) * bucket)
     return int(np.clip(rounded, int(args.min_candidates_per_node), int(args.max_candidates_per_node)))
+
+
+def build_octree_config(preset: str) -> OctreeBuildConfig:
+    if preset == "object":
+        return OctreeBuildConfig.with_default_object_semantics()
+    return OctreeBuildConfig.with_default_carla_semantics()
 
 
 def select_surface_candidates(

@@ -130,6 +130,46 @@ class OctreeTokenizerTest(unittest.TestCase):
         nodes = build_instance_octree(instance, config)
         self.assertEqual(nodes[0].split_flag, 0b011)
 
+    def test_min_points_per_node_stops_low_count_split(self) -> None:
+        instance = _make_dense_instance()
+        config = OctreeBuildConfig(
+            high_priority_semantics={1},
+            min_points_per_node=20,
+            geom_threshold=0.01,
+            rgb_threshold=0.01,
+        )
+
+        nodes = build_instance_octree(instance, config)
+
+        self.assertEqual(len(nodes), 1)
+        self.assertEqual(nodes[0].structure_state, "leaf")
+
+    def test_object_preset_uses_ten_point_split_floor(self) -> None:
+        config = OctreeBuildConfig.with_default_object_semantics()
+
+        self.assertEqual(config.min_points_per_node, 10)
+        self.assertEqual(config.min_points_per_leaf, 4)
+
+    def test_sparse_children_are_pruned_from_child_mask(self) -> None:
+        instance = _make_sparse_child_instance()
+        config = OctreeBuildConfig(
+            high_priority_semantics={1},
+            min_points_per_node=4,
+            min_points_per_leaf=4,
+            geom_threshold=0.01,
+            rgb_threshold=1.0,
+        )
+
+        nodes = build_instance_octree(instance, config)
+        root = nodes[0]
+        children = [node for node in nodes if node.parent_id == root.node_id]
+
+        self.assertEqual(root.structure_state, "split")
+        self.assertEqual(len(children), 1)
+        self.assertEqual(root.child_mask, 1)
+        self.assertEqual(children[0].child_index, 0)
+        self.assertGreaterEqual(children[0].point_indices.shape[0], 4)
+
 
 class _StubNodeCodeProvider:
     def encode_node(self, xyz_local: np.ndarray, rgb: np.ndarray) -> int:
@@ -262,6 +302,44 @@ def _make_vehicle_instance(center_xyz: np.ndarray) -> SceneInstance:
         semantic_id=14,
         category_name="car",
         xyz_ego=local + center_xyz.astype(np.float32, copy=False),
+        rgb=rgb,
+        bbox_ego=bbox,
+        pose_ego=Pose3DYaw(center_xyz=bbox.center_xyz.copy(), yaw=bbox.yaw),
+        xyz_local=local.copy(),
+        num_points=local.shape[0],
+    )
+
+
+def _make_sparse_child_instance() -> SceneInstance:
+    dense = np.asarray(
+        [
+            [-1.0, -1.0, -1.0],
+            [-0.8, -1.0, -1.0],
+            [-1.0, -0.8, -1.0],
+            [-1.0, -1.0, -0.8],
+        ],
+        dtype=np.float32,
+    )
+    sparse = np.asarray(
+        [
+            [1.0, 1.0, 1.0],
+            [0.9, 1.0, 1.0],
+            [1.0, 0.9, 1.0],
+        ],
+        dtype=np.float32,
+    )
+    local = np.concatenate([dense, sparse], axis=0)
+    rgb = np.full((local.shape[0], 3), 180, dtype=np.uint8)
+    bbox = GroundAlignedOBB(
+        center_xyz=np.zeros((3,), dtype=np.float32),
+        size_xyz=np.asarray([2.0, 2.0, 2.0], dtype=np.float32),
+        yaw=0.0,
+    )
+    return SceneInstance(
+        instance_id=1,
+        semantic_id=1,
+        category_name="semantic_1",
+        xyz_ego=local.copy(),
         rgb=rgb,
         bbox_ego=bbox,
         pose_ego=Pose3DYaw(center_xyz=bbox.center_xyz.copy(), yaw=bbox.yaw),

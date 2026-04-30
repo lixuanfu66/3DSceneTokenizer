@@ -70,11 +70,30 @@ def build_default_carla_semantic_policies() -> dict[int, SemanticOctreePolicy]:
     }
 
 
+def build_default_object_semantic_policies(
+    *,
+    object_semantic_id: int = 100,
+) -> dict[int, SemanticOctreePolicy]:
+    return {
+        int(object_semantic_id): SemanticOctreePolicy(
+            "Object",
+            min_depth=2,
+            max_depth_by_distance={"near": 4, "mid": 4, "far": 4},
+            preferred_split_flag=0b111,
+            lock_preferred_split=False,
+            priority="high",
+            geom_threshold_scale=0.8,
+            rgb_threshold_scale=1.0,
+        )
+    }
+
+
 @dataclass(slots=True)
 class OctreeBuildConfig:
     near_distance: float = 15.0
     mid_distance: float = 35.0
     min_points_per_node: int = 8
+    min_points_per_leaf: int = 1
     geom_threshold: float = 0.35
     rgb_threshold: float = 0.10
     extent_weight: float = 0.45
@@ -101,6 +120,12 @@ class OctreeBuildConfig:
     @classmethod
     def with_default_carla_semantics(cls, **kwargs) -> "OctreeBuildConfig":
         return cls(semantic_policies=build_default_carla_semantic_policies(), **kwargs)
+
+    @classmethod
+    def with_default_object_semantics(cls, **kwargs) -> "OctreeBuildConfig":
+        kwargs.setdefault("min_points_per_node", 10)
+        kwargs.setdefault("min_points_per_leaf", 4)
+        return cls(semantic_policies=build_default_object_semantic_policies(), **kwargs)
 
     def distance_bin(self, center_xyz: np.ndarray) -> str:
         distance = float(np.linalg.norm(center_xyz[:2]))

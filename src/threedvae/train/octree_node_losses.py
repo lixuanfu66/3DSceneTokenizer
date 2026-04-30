@@ -34,11 +34,30 @@ def octree_node_vae_loss(
     vq_weight: float = 1.0,
     occ_target_mode: str = "soft_udf",
     occ_soft_distance: float = 0.03,
+    udf_loss_mode: str = "smooth_l1",
+    udf_near_weight: float = 1.0,
+    udf_band_weight: float = 1.0,
+    udf_mid_weight: float = 1.0,
+    udf_far_weight: float = 1.0,
+    udf_near_threshold: float = 0.003,
+    udf_band_threshold: float = 0.01,
+    udf_mid_threshold: float = 0.03,
 ) -> OctreeNodeLossBreakdown:
     if not HAS_TORCH:
         require_torch()
 
-    udf = F.smooth_l1_loss(pred_udf, target_udf)
+    udf = _udf_loss(
+        pred_udf,
+        target_udf,
+        mode=udf_loss_mode,
+        near_weight=udf_near_weight,
+        band_weight=udf_band_weight,
+        mid_weight=udf_mid_weight,
+        far_weight=udf_far_weight,
+        near_threshold=udf_near_threshold,
+        band_threshold=udf_band_threshold,
+        mid_threshold=udf_mid_threshold,
+    )
     occ_target = _occupancy_target_from_udf(
         target_udf=target_udf,
         fallback_target=target_occ,
@@ -73,6 +92,33 @@ def octree_node_vae_loss(
 
 def _kl_normal(mu, logvar):
     return -0.5 * torch.mean(1.0 + logvar - mu.pow(2) - logvar.exp())
+
+
+def _udf_loss(
+    pred,
+    target,
+    *,
+    mode: str,
+    near_weight: float,
+    band_weight: float,
+    mid_weight: float,
+    far_weight: float,
+    near_threshold: float,
+    band_threshold: float,
+    mid_threshold: float,
+):
+    normalized_mode = mode.strip().lower()
+    if normalized_mode == "smooth_l1":
+        return F.smooth_l1_loss(pred, target)
+    if normalized_mode != "bucket_weighted_smooth_l1":
+        raise ValueError(f"Unsupported UDF loss mode: {mode}")
+    raw = F.smooth_l1_loss(pred, target, reduction="none")
+    weights = torch.full_like(target, float(far_weight))
+    weights = torch.where(target < float(mid_threshold), torch.full_like(weights, float(mid_weight)), weights)
+    weights = torch.where(target < float(band_threshold), torch.full_like(weights, float(band_weight)), weights)
+    weights = torch.where(target < float(near_threshold), torch.full_like(weights, float(near_weight)), weights)
+    denom = torch.clamp(weights.sum(), min=1.0)
+    return (raw * weights).sum() / denom
 
 
 def _occupancy_target_from_udf(*, target_udf, fallback_target, mode: str, soft_distance: float):

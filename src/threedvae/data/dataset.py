@@ -39,6 +39,7 @@ class TreeNodePointCloudSample:
     size_local: np.ndarray
     xyz_local: np.ndarray
     rgb: np.ndarray
+    num_points: int
 
 
 class InstancePointCloudDataset:
@@ -114,7 +115,7 @@ class TreeNodePointCloudDataset:
         )
         self.seed = int(seed)
         self.query_strategy = query_strategy.strip().lower()
-        if self.query_strategy not in {"uniform", "layered"}:
+        if self.query_strategy not in {"uniform", "layered", "calibrated_surface"}:
             raise ValueError(f"Unsupported query strategy: {query_strategy}")
 
     def __len__(self) -> int:
@@ -140,6 +141,16 @@ class TreeNodePointCloudDataset:
                 truncation_distance=self.udf_truncation,
                 seed=query_seed,
             )
+        elif self.query_strategy == "calibrated_surface":
+            query_xyz, query_udf = build_calibrated_surface_udf_queries(
+                sample.xyz_local,
+                node_center=sample.center_local,
+                node_size=sample.size_local,
+                split_flag=sample.split_flag,
+                num_queries=self.queries_per_node,
+                truncation_distance=self.udf_truncation,
+                seed=query_seed,
+            )
         else:
             query_xyz, query_udf = build_udf_queries(
                 sample.xyz_local,
@@ -157,6 +168,7 @@ class TreeNodePointCloudDataset:
             "semantic_id": sample.semantic_id,
             "sample_type": "node",
             "node_id": sample.node_id,
+            "num_node_points": sample.num_points,
             "parent_id": -1 if sample.parent_id is None else sample.parent_id,
             "child_index": -1 if sample.child_index is None else sample.child_index,
             "path_code": sample.path_code,
@@ -184,6 +196,7 @@ class TreeNodePointCloudDataset:
             "instance_id": torch.as_tensor([item["instance_id"] for item in batch], dtype=torch.int64),
             "semantic_id": torch.as_tensor([item["semantic_id"] for item in batch], dtype=torch.int64),
             "node_id": torch.as_tensor([item["node_id"] for item in batch], dtype=torch.int64),
+            "num_node_points": torch.as_tensor([item["num_node_points"] for item in batch], dtype=torch.int64),
             "parent_id": torch.as_tensor([item["parent_id"] for item in batch], dtype=torch.int64),
             "child_index": torch.as_tensor([item["child_index"] for item in batch], dtype=torch.int64),
             "path_code": [item["path_code"] for item in batch],
@@ -234,6 +247,7 @@ def collect_node_samples_from_ply_paths(
     octree_config: OctreeBuildConfig | None = None,
     drop_negative_instance_ids: bool = True,
     include_leaf_only: bool = False,
+    min_node_points: int = 1,
 ) -> list[TreeNodePointCloudSample]:
     config = octree_config or OctreeBuildConfig()
     samples: list[TreeNodePointCloudSample] = []
@@ -249,6 +263,8 @@ def collect_node_samples_from_ply_paths(
                     continue
                 xyz_local = instance.xyz_local[node.point_indices]
                 rgb = instance.rgb[node.point_indices]
+                if xyz_local.shape[0] < int(min_node_points):
+                    continue
                 samples.append(
                     TreeNodePointCloudSample(
                         scene_id=scene.scene_id,
@@ -265,6 +281,7 @@ def collect_node_samples_from_ply_paths(
                         size_local=node.size_local.astype(np.float32, copy=False),
                         xyz_local=xyz_local.astype(np.float32, copy=False),
                         rgb=rgb.astype(np.uint8, copy=False),
+                        num_points=int(xyz_local.shape[0]),
                     )
                 )
     return samples
@@ -301,6 +318,7 @@ def build_node_dataset_from_ply_dir(
     seed: int = 0,
     octree_config: OctreeBuildConfig | None = None,
     include_leaf_only: bool = False,
+    min_node_points: int = 1,
     query_strategy: str = "uniform",
 ) -> TreeNodePointCloudDataset:
     paths = sorted(str(path) for path in Path(ply_dir).glob("*.ply"))
@@ -308,6 +326,7 @@ def build_node_dataset_from_ply_dir(
         paths,
         octree_config=octree_config,
         include_leaf_only=include_leaf_only,
+        min_node_points=min_node_points,
     )
     return TreeNodePointCloudDataset(
         samples,
@@ -330,12 +349,14 @@ def build_node_dataset_from_ply_paths(
     seed: int = 0,
     octree_config: OctreeBuildConfig | None = None,
     include_leaf_only: bool = False,
+    min_node_points: int = 1,
     query_strategy: str = "uniform",
 ) -> TreeNodePointCloudDataset:
     samples = collect_node_samples_from_ply_paths(
         ply_paths,
         octree_config=octree_config,
         include_leaf_only=include_leaf_only,
+        min_node_points=min_node_points,
     )
     return TreeNodePointCloudDataset(
         samples,
@@ -476,6 +497,76 @@ def build_layered_udf_queries(
     return queries.astype(np.float32, copy=False), udf
 
 
+def build_calibrated_surface_udf_queries(
+    xyz: np.ndarray,
+    *,
+    node_center: np.ndarray,
+    node_size: np.ndarray,
+    split_flag: int,
+    num_queries: int,
+    truncation_distance: float,
+    seed: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    if xyz.shape[0] == 0:
+        raise ValueError("Cannot build UDF queries from an empty node point cloud.")
+
+    rng = np.random.default_rng(seed)
+    xyz = xyz.astype(np.float32, copy=False)
+    node_center = node_center.astype(np.float32, copy=False)
+    node_size = np.maximum(node_size.astype(np.float32, copy=False), 1e-2)
+    bbox_min = node_center - 0.5 * node_size
+    bbox_max = node_center + 0.5 * node_size
+
+    surface_count = int(round(num_queries * 0.45))
+    band_count = int(round(num_queries * 0.25))
+    volume_count = int(round(num_queries * 0.20))
+    hard_count = max(0, num_queries - surface_count - band_count - volume_count)
+
+    surface = _sample_covered_surface_queries(
+        xyz,
+        rng=rng,
+        count=surface_count,
+        node_center=node_center,
+        node_size=node_size,
+    )
+    band = _sample_surface_band_queries(
+        xyz,
+        rng=rng,
+        count=band_count,
+        node_size=node_size,
+    )
+    volume = _sample_layered_volume_queries(
+        rng=rng,
+        count=volume_count,
+        bbox_min=bbox_min,
+        bbox_max=bbox_max,
+    )
+    hard = _sample_calibrated_hard_queries(
+        xyz,
+        rng=rng,
+        count=hard_count,
+        node_center=node_center,
+        node_size=node_size,
+        split_flag=split_flag,
+        bbox_min=bbox_min,
+        bbox_max=bbox_max,
+    )
+    queries = np.concatenate([surface, band, volume, hard], axis=0).astype(np.float32, copy=False)
+    if queries.shape[0] < num_queries:
+        extra = _sample_layered_volume_queries(
+            rng=rng,
+            count=num_queries - queries.shape[0],
+            bbox_min=bbox_min,
+            bbox_max=bbox_max,
+        )
+        queries = np.concatenate([queries, extra], axis=0)
+    queries = np.clip(queries, bbox_min[None, :], bbox_max[None, :])
+    order = rng.permutation(queries.shape[0])
+    queries = queries[order][:num_queries]
+    udf = compute_truncated_udf(queries, xyz, truncation_distance)
+    return queries.astype(np.float32, copy=False), udf
+
+
 def compute_truncated_udf(
     queries: np.ndarray,
     xyz: np.ndarray,
@@ -506,6 +597,88 @@ def _sample_layered_surface_queries(
         ],
         axis=0,
     ).astype(np.float32, copy=False)
+
+
+def _sample_covered_surface_queries(
+    xyz: np.ndarray,
+    *,
+    rng: np.random.Generator,
+    count: int,
+    node_center: np.ndarray,
+    node_size: np.ndarray,
+) -> np.ndarray:
+    if count <= 0:
+        return np.zeros((0, 3), dtype=np.float32)
+    anchors = _covered_anchor_points(
+        xyz,
+        rng=rng,
+        count=count,
+        node_center=node_center,
+        node_size=node_size,
+        grid_size=4,
+    )
+    diagonal = float(np.linalg.norm(node_size.astype(np.float32, copy=False)))
+    sigma_value = float(np.clip(0.01 * diagonal, 5e-4, 0.0025))
+    sigma = np.full((3,), sigma_value, dtype=np.float32)
+    noise = rng.normal(loc=0.0, scale=sigma[None, :], size=(anchors.shape[0], 3)).astype(np.float32)
+    return (anchors + noise).astype(np.float32, copy=False)
+
+
+def _covered_anchor_points(
+    xyz: np.ndarray,
+    *,
+    rng: np.random.Generator,
+    count: int,
+    node_center: np.ndarray,
+    node_size: np.ndarray,
+    grid_size: int,
+) -> np.ndarray:
+    if count <= 0:
+        return np.zeros((0, 3), dtype=np.float32)
+    if xyz.shape[0] == 0:
+        return np.zeros((0, 3), dtype=np.float32)
+    bbox_min = node_center - 0.5 * node_size
+    normalized = (xyz - bbox_min[None, :]) / np.maximum(node_size[None, :], 1e-6)
+    bucket_coords = np.clip((normalized * int(grid_size)).astype(np.int32), 0, int(grid_size) - 1)
+    bucket_ids = (
+        bucket_coords[:, 0]
+        + int(grid_size) * bucket_coords[:, 1]
+        + int(grid_size) * int(grid_size) * bucket_coords[:, 2]
+    )
+    anchors = []
+    for bucket_id in rng.permutation(np.unique(bucket_ids)):
+        bucket_indices = np.flatnonzero(bucket_ids == bucket_id)
+        anchors.append(xyz[int(rng.choice(bucket_indices))])
+        if len(anchors) >= count:
+            break
+    if len(anchors) < count:
+        extra_count = count - len(anchors)
+        extra_indices = _farthest_point_indices(xyz, count=min(extra_count, xyz.shape[0]), rng=rng)
+        anchors.extend(xyz[index] for index in extra_indices)
+    if len(anchors) < count:
+        extra = rng.choice(xyz.shape[0], size=count - len(anchors), replace=True)
+        anchors.extend(xyz[int(index)] for index in extra)
+    return np.asarray(anchors[:count], dtype=np.float32)
+
+
+def _sample_surface_band_queries(
+    xyz: np.ndarray,
+    *,
+    rng: np.random.Generator,
+    count: int,
+    node_size: np.ndarray,
+) -> np.ndarray:
+    if count <= 0:
+        return np.zeros((0, 3), dtype=np.float32)
+    choice = rng.choice(xyz.shape[0], size=count, replace=xyz.shape[0] < count)
+    diagonal = float(np.linalg.norm(node_size.astype(np.float32, copy=False)))
+    min_radius = float(np.clip(0.03 * diagonal, 0.0025, 0.006))
+    max_radius = float(np.clip(0.12 * diagonal, min_radius + 0.002, 0.02))
+    directions = rng.normal(loc=0.0, scale=1.0, size=(count, 3)).astype(np.float32)
+    norms = np.maximum(np.linalg.norm(directions, axis=1, keepdims=True), 1e-6)
+    directions = directions / norms
+    radii = rng.uniform(min_radius, max_radius, size=(count, 1)).astype(np.float32)
+    return (xyz[choice].astype(np.float32, copy=False) + directions * radii).astype(np.float32, copy=False)
 
 
 def _sample_layered_volume_queries(
@@ -558,6 +731,61 @@ def _sample_layered_hard_queries(
     return np.concatenate([split, sparse], axis=0).astype(np.float32, copy=False)
 
 
+def _sample_calibrated_hard_queries(
+    xyz: np.ndarray,
+    *,
+    rng: np.random.Generator,
+    count: int,
+    node_center: np.ndarray,
+    node_size: np.ndarray,
+    split_flag: int,
+    bbox_min: np.ndarray,
+    bbox_max: np.ndarray,
+) -> np.ndarray:
+    if count <= 0:
+        return np.zeros((0, 3), dtype=np.float32)
+    split_count = count // 3
+    boundary_count = count // 3
+    sparse_count = max(0, count - split_count - boundary_count)
+    split = _sample_split_plane_queries(
+        rng=rng,
+        count=split_count,
+        node_center=node_center,
+        node_size=node_size,
+        split_flag=split_flag,
+    )
+    boundary = _sample_node_boundary_queries(
+        rng=rng,
+        count=boundary_count,
+        bbox_min=bbox_min,
+        bbox_max=bbox_max,
+    )
+    sparse = _sample_surface_band_queries(
+        xyz,
+        rng=rng,
+        count=sparse_count,
+        node_size=node_size,
+    )
+    return np.concatenate([split, boundary, sparse], axis=0).astype(np.float32, copy=False)
+
+
+def _sample_node_boundary_queries(
+    *,
+    rng: np.random.Generator,
+    count: int,
+    bbox_min: np.ndarray,
+    bbox_max: np.ndarray,
+) -> np.ndarray:
+    if count <= 0:
+        return np.zeros((0, 3), dtype=np.float32)
+    queries = rng.uniform(bbox_min, bbox_max, size=(count, 3)).astype(np.float32)
+    axes = rng.integers(0, 3, size=count)
+    sides = rng.integers(0, 2, size=count)
+    for row, axis, side in zip(queries, axes, sides):
+        row[int(axis)] = bbox_min[int(axis)] if int(side) == 0 else bbox_max[int(axis)]
+    return queries
+
+
 def _jitter_points(
     xyz: np.ndarray,
     *,
@@ -570,6 +798,25 @@ def _jitter_points(
     choice = rng.choice(xyz.shape[0], size=count, replace=xyz.shape[0] < count)
     noise = rng.normal(loc=0.0, scale=sigma[None, :], size=(count, 3)).astype(np.float32)
     return xyz[choice] + noise
+
+
+def _farthest_point_indices(
+    xyz: np.ndarray,
+    *,
+    count: int,
+    rng: np.random.Generator,
+) -> list[int]:
+    if count <= 0 or xyz.shape[0] == 0:
+        return []
+    first = int(rng.integers(0, xyz.shape[0]))
+    selected = [first]
+    distances = np.sum((xyz - xyz[first][None, :]) ** 2, axis=1)
+    for _ in range(1, min(count, xyz.shape[0])):
+        next_index = int(np.argmax(distances))
+        selected.append(next_index)
+        next_distances = np.sum((xyz - xyz[next_index][None, :]) ** 2, axis=1)
+        distances = np.minimum(distances, next_distances)
+    return selected
 
 
 def _sample_split_plane_queries(

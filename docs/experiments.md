@@ -291,3 +291,734 @@ Adaptive candidate count is useful when it preserves a strong per-node lower bou
 ### Follow-Up Decision
 
 Use fixed `hybrid512` for fast debugging and adaptive `min512/ref4/max2048` when inspecting reconstruction quality in large nodes.
+
+## EXP-007: Objaverse-XL Smithsonian Smoke Data
+
+### Improvement Goal
+
+Check whether a small amount of object-level Objaverse-XL data can be downloaded and converted into the same PLY schema used by the current 3dVAE pipeline.
+
+### Scheme Design
+
+Use the Objaverse-XL Hugging Face metadata for the Smithsonian subset, download a few CC0 GLB assets, sample mesh surfaces, normalize each object to a unit box, and export `x y z red green blue instance semantic` PLY files.
+
+### Experiment Design
+
+- Source metadata: `allenai/objaverse-xl`, `smithsonian/smithsonian.parquet`.
+- Data count: 3 objects.
+- Samples: 50,000 surface points per object.
+- Output schema: same PLY fields as Bench2Drive debug data.
+- Pipeline check: run `scripts/export_scene_tokens.py` on each exported PLY.
+
+### Implementation
+
+Added `scripts/prepare_objaverse_smoke_ply.py`.
+
+The Smithsonian GLBs use `KHR_draco_mesh_compression`, so plain `trimesh.load()` produced invalid all-zero geometry. The script now parses GLB chunks, decodes Draco primitives with `DracoPy`, builds `trimesh.Trimesh` objects, samples surfaces, and writes compatible PLY files.
+
+### Results
+
+Generated files:
+
+- PLY directory: `data/objaverse_xl_smoke/ply`
+- Manifest: `data/objaverse_xl_smoke/manifest.json`
+- Scene token smoke outputs: `data/objaverse_xl_smoke/scene_tokens_smoke`
+
+Validation summary:
+
+| Object | Points | XYZ range after normalization | Semantic | Instance |
+|---|---:|---|---:|---:|
+| `Pan_troglodytes_verus_Talus_Left` | 50000 | within unit box | 100 | 1 |
+| `Blue_Crab` | 50000 | within unit box | 100 | 2 |
+| `George_Washington` | 50000 | within unit box | 100 | 3 |
+
+`python -m unittest tests.test_bench2drive_rgbd tests.test_ply_loader` passed, and `export_scene_tokens.py` succeeded for all three PLY files.
+
+### Final Conclusion
+
+Objaverse-XL can provide cleaner instance-level geometry for validating VAE convergence before returning to noisy Bench2Drive scenes. The current smoke data is suitable for geometry-only VAE debugging.
+
+### Follow-Up Decision
+
+Scale this path from 3 objects to 100-1000 objects, prioritize geometry-only VAE convergence first, then add better texture/color sampling for fused RGB experiments.
+
+## EXP-008: Objaverse++ Quality-Filtered Object Smoke Data
+
+### Improvement Goal
+
+Use Objaverse++ quality annotations to select cleaner Objaverse objects for object-level VAE convergence validation.
+
+### Scheme Design
+
+Filter Objaverse++ UID annotations with a strict quality rule, map selected UIDs to original Objaverse GLB paths via `object-paths.json.gz`, download the assets, sample mesh surfaces, normalize each object to a unit box, and export the same PLY schema used by the current 3dVAE pipeline.
+
+### Experiment Design
+
+- Annotation source: `cindyxl/ObjaversePlusPlus`, `annotated_800k.json`.
+- Asset source: `allenai/objaverse`, `object-paths.json.gz` plus `glbs/.../*.glb`.
+- Strict filter: `score>=3`, `style in {realistic, scanned}`, `density in {mid, high}`, and not scene/multi-object/transparent/single-color.
+- Smoke count: 20 objects.
+- Points per object: 50,000.
+- Validation: remote PLY loader check for all 20 objects and remote scene token export for the first 5 objects.
+
+### Implementation
+
+Added `scripts/prepare_objaversepp_quality_ply.py`.
+
+The remote host and container could not reach Hugging Face directly (`Network is unreachable`), so the first smoke batch was downloaded and converted locally, then synchronized to `/data/l00821447/3DSceneTokenizer/data/objaverse_pp_quality` on the remote debug machine.
+
+### Results
+
+The strict filter produced `79221` candidate objects from `789195` annotated Objaverse entries.
+
+Generated remote data:
+
+- `/data/l00821447/3DSceneTokenizer/data/objaverse_pp_quality/assets`
+- `/data/l00821447/3DSceneTokenizer/data/objaverse_pp_quality/ply`
+- `/data/l00821447/3DSceneTokenizer/data/objaverse_pp_quality/selected_quality_manifest.json`
+- `/data/l00821447/3DSceneTokenizer/data/objaverse_pp_quality/prepared_quality_manifest.json`
+
+Validation:
+
+| Check | Result |
+|---|---:|
+| Prepared assets | `20/20` |
+| PLY files readable remotely | `20` |
+| Points per object | `50000` |
+| Scene token exports | first `5` succeeded |
+
+### Final Conclusion
+
+Objaverse++ gives a much better object-level training pool than random Objaverse sampling. The strict subset is large enough for the next 100-1000 object geometry-only VAE training run.
+
+### Follow-Up Decision
+
+Use this strict Objaverse++ subset as the next object-level VAE data source. Keep Bench2Drive for later scene-level fine-tuning and integration.
+
+## EXP-009: Task-Relevant Objaverse++ Object Data
+
+### Improvement Goal
+
+Bias object-level VAE training data toward autonomous-driving and indoor-robotics objects instead of generic high-quality Objaverse assets.
+
+### Scheme Design
+
+Intersect Objaverse++ quality annotations with Objaverse LVIS category annotations. Use explicit category whitelists for driving and indoor objects, sample a small balanced set per category, require non-constant RGB, and put the category name into each output file name.
+
+### Experiment Design
+
+- Quality source: Objaverse++ `annotated_800k.json`.
+- Category source: Objaverse `lvis-annotations.json.gz`.
+- Asset path source: Objaverse `object-paths.json.gz`.
+- Category preset: `driving,indoor`.
+- Sampling: up to 2 candidates per LVIS category.
+- Color filter: mean RGB channel std >= `3.0`.
+- Points per object: 50,000.
+- Remote validation: read all PLY files and run scene token export on representative categories.
+
+### Implementation
+
+Updated `scripts/prepare_objaversepp_quality_ply.py`:
+
+- Added LVIS category presets.
+- Added `--per-category-count`.
+- Added category-prefixed asset/PLY names.
+- Added `--require-color-variance`.
+
+### Results
+
+Generated data:
+
+- Local: `data/objaverse_pp_task_relevant`
+- Remote: `/data/l00821447/3DSceneTokenizer/data/objaverse_pp_task_relevant`
+
+Summary:
+
+| Check | Result |
+|---|---:|
+| Strict quality + category candidates | `406` |
+| Balanced selected candidates | `92` |
+| Successful colored PLY files | `80` |
+| Points per PLY | `50000` |
+| Remote loader check | `80/80` |
+| Remote scene-token smoke export | `6/6` representative categories |
+
+Representative exported categories include `car_(automobile)`, `traffic_light`, `stop_sign`, `person`, `desk`, `sofa`, `lamp`, `computer_keyboard`, `motorcycle`, and multiple truck/bus variants.
+
+### Final Conclusion
+
+The task-relevant filtered subset is a better next object-level VAE dataset than generic high-quality Objaverse sampling because it matches the downstream autonomous-driving and indoor-robotics domains while preserving basic quality and color requirements.
+
+### Follow-Up Decision
+
+Use `data/objaverse_pp_task_relevant/ply` for the next geometry/RGB object-level VAE smoke training. Later expand per category and relax filtering only for rare safety-critical classes such as `person` and traffic signs.
+
+## EXP-010: Task-Relevant Objaverse++ Validation Split
+
+### Improvement Goal
+
+Create a held-out validation/test split from the same task-relevant Objaverse++ candidate pool, without reusing the first training candidates.
+
+### Scheme Design
+
+Use the same quality, category, and color filters as the training split, but start from the third candidate in each category. Continue through candidates until 20 successful colored PLY files are produced.
+
+### Experiment Design
+
+- Source pool: strict quality + `driving,indoor` LVIS category candidates.
+- Split rule: `--start-index 2` with `--per-category-count 2`.
+- Target success count: 20.
+- Points per object: 50,000.
+- Remote validation: read all PLY files and export scene tokens for representative samples.
+
+### Implementation
+
+Updated `scripts/prepare_objaversepp_quality_ply.py` with `--target-success-count`.
+
+### Results
+
+Generated data:
+
+- Local: `data/objaverse_pp_task_relevant_val`
+- Remote: `/data/l00821447/3DSceneTokenizer/data/objaverse_pp_task_relevant_val`
+
+Summary:
+
+| Check | Result |
+|---|---:|
+| Candidate rows | `64` |
+| Attempted rows | `21` |
+| Successful colored PLY files | `20` |
+| Points per PLY | `50000` |
+| Remote loader check | `20/20` |
+| Remote scene-token smoke export | `3/3` representative samples |
+
+### Final Conclusion
+
+The project now has a small but clean task-relevant object-level train/validation pair: 80 training PLY files and 20 held-out validation PLY files.
+
+### Follow-Up Decision
+
+Use `data/objaverse_pp_task_relevant/ply` for training and `data/objaverse_pp_task_relevant_val/ply` for validation in the next object-level VAE run.
+
+## EXP-011: Object-Level Adaptive Octree Preset
+
+### Improvement Goal
+
+Evaluate whether the existing CARLA semantic octree policy is reasonable for high-quality complete object-level data, and define a better object-level preset if needed.
+
+### Scheme Design
+
+Compare two policies on the same 80/20 task-relevant Objaverse++ split:
+
+- `carla`: existing scene-level policy table. Unknown semantic `100` falls back to a shallow object/region policy.
+- `object`: a dedicated complete-object preset where semantic `100` uses object-priority splitting up to depth `4`.
+
+### Experiment Design
+
+- Train set: `data/objaverse_pp_task_relevant/ply`, 80 PLY files.
+- Validation set: `data/objaverse_pp_task_relevant_val/ply`, 20 PLY files.
+- Points per PLY: 50,000.
+- Evaluation script: `scripts/evaluate_octree_dataset.py`.
+- Metrics: node/token count, max depth, leaf ratio, semantic histogram.
+
+### Implementation
+
+Added `build_default_object_semantic_policies()` and `OctreeBuildConfig.with_default_object_semantics()` in `src/threedvae/octree/split_policy.py`.
+
+Added `--octree-preset {carla,object}` to the octree evaluation/training scripts so the same data can be evaluated under both policies.
+
+### Results
+
+CARLA preset:
+
+| Split | Objects | Total Tokens | Mean Tokens/Object | Median | Max Depth |
+|---|---:|---:|---:|---:|---:|
+| train80 | 80 | 4,245 | 53.06 | 57.0 | 2 |
+| val20 | 20 | 1,049 | 52.45 | 51.5 | 2 |
+
+Object preset:
+
+| Split | Objects | Total Tokens | Mean Tokens/Object | Median | Max Depth |
+|---|---:|---:|---:|---:|---:|
+| train80 | 80 | 109,382 | 1,367.28 | 1,337.5 | 4 |
+| val20 | 20 | 27,465 | 1,373.25 | 1,234.0 | 4 |
+
+### Final Conclusion
+
+The CARLA preset is too coarse for complete object-level data because semantic `100` is treated as an unknown fallback and stops at depth `2`. The object preset is much more suitable for complete mesh-derived objects because it exposes shape detail at depth `4`, with about 1.3k nodes per object.
+
+### Follow-Up Decision
+
+Use `--octree-preset object` for object-level VAE training and keep `--octree-preset carla` for Bench2Drive/self-driving partial scene data.
+
+## EXP-012: Object-Level Geometry VAE
+
+### Improvement Goal
+
+Train a geometry-only VAE on the 80 high-quality task-relevant objects and evaluate whether it generalizes to the 20 held-out object-level samples.
+
+### Scheme Design
+
+Use the object octree preset from EXP-011. Train a node-level geometry VAE with UDF reconstruction, soft occupancy auxiliary loss, and a small KL weight. Keep RGB disabled to isolate geometric capacity.
+
+### Experiment Design
+
+- Train set: 80 object PLY files.
+- Validation set: 20 object PLY files.
+- Octree preset: `object`.
+- Points per node: `64`.
+- Queries per node: `64`.
+- Query strategy: `uniform`.
+- Model: hidden dim `128`, latent dim `64`, attention heads `4`.
+- Training: `8` epochs, batch size `128`, learning rate `5e-4`, weight decay `1e-4`, KL weight `1e-5`, occupancy weight `0.05`.
+- Device: Ascend NPU `npu:8`.
+- Checkpoint evaluation: deterministic validation pass over all `27,465` val nodes and `1,757,760` query points.
+
+### Implementation
+
+Updated `scripts/train_octree_node_vae.py` to accept `--octree-preset object`.
+
+Added `scripts/evaluate_octree_vae_checkpoint.py` for deterministic checkpoint evaluation on a PLY directory.
+
+### Results
+
+Training summary:
+
+| Metric | Epoch 1 | Epoch 8 |
+|---|---:|---:|
+| train total loss | 0.024038 | 0.019222 |
+| train UDF loss | 0.003749 | 0.000021 |
+| train occupancy loss | 0.405724 | 0.383773 |
+| val total loss | 0.019361 | 0.018669 |
+| val UDF loss | 0.000032 | 0.000017 |
+| val occupancy loss | 0.386474 | 0.372755 |
+
+Deterministic validation checkpoint metrics:
+
+| Metric | Value |
+|---|---:|
+| val nodes | 27,465 |
+| val queries | 1,757,760 |
+| UDF MAE | 0.003310 |
+| UDF RMSE | 0.005911 |
+| UDF max abs | 0.304473 |
+| Occupancy accuracy | 0.988322 |
+
+### Final Conclusion
+
+The geometry-only VAE converges cleanly on high-quality object-level data. The held-out UDF MAE is about `0.0033` in the normalized object coordinate scale, and the occupancy auxiliary head reaches about `98.8%` accuracy. This is a much healthier convergence signal than the earlier noisy partial self-driving point cloud experiments.
+
+### Follow-Up Decision
+
+Use this geometry-only run as the object-level baseline. Next geometry improvements should focus on reconstruction sampling/export quality, longer training, and capacity ablations rather than diagnosing basic convergence.
+
+## EXP-013: Object-Level Geometry+Color VAE
+
+### Improvement Goal
+
+Train a fused geometry+color VAE on the same object-level split and evaluate whether a single node latent can jointly encode UDF geometry and RGB.
+
+### Scheme Design
+
+Start from the geometry-only setup in EXP-012 and enable RGB point fusion plus RGB query prediction. Keep the same latent size and training schedule so the cost of adding color is visible.
+
+### Experiment Design
+
+- Train/validation data: same 80/20 object split.
+- Octree preset: `object`.
+- Points per node: `64`.
+- Queries per node: `64`.
+- Query strategy: `uniform`.
+- Model: hidden dim `128`, latent dim `64`, attention heads `4`.
+- RGB options: `--use-rgb-fusion --predict-rgb --rgb-weight 1.0`.
+- Training: `8` epochs, batch size `128`, learning rate `5e-4`, weight decay `1e-4`, KL weight `1e-5`, occupancy weight `0.05`.
+- Device: Ascend NPU `npu:8`.
+
+### Implementation
+
+Used the same `scripts/train_octree_node_vae.py` path with RGB fusion and prediction enabled. Evaluated with `scripts/evaluate_octree_vae_checkpoint.py`, which reports RGB MAE/MSE/PSNR when the checkpoint contains an RGB head.
+
+### Results
+
+Training summary:
+
+| Metric | Epoch 1 | Epoch 8 |
+|---|---:|---:|
+| train total loss | 0.055255 | 0.031915 |
+| train UDF loss | 0.003695 | 0.000027 |
+| train occupancy loss | 0.411341 | 0.393254 |
+| train RGB loss | 0.030965 | 0.012194 |
+| val total loss | 0.037084 | 0.030980 |
+| val UDF loss | 0.000044 | 0.000025 |
+| val occupancy loss | 0.388947 | 0.385227 |
+| val RGB loss | 0.017534 | 0.011666 |
+
+Deterministic validation checkpoint metrics:
+
+| Metric | Value |
+|---|---:|
+| val nodes | 27,465 |
+| val queries | 1,757,760 |
+| UDF MAE | 0.003889 |
+| UDF RMSE | 0.007036 |
+| UDF max abs | 0.233344 |
+| Occupancy accuracy | 0.987787 |
+| RGB MAE | 0.061589 |
+| RGB MSE | 0.011695 |
+| RGB PSNR | 19.32 dB |
+
+### Final Conclusion
+
+The fused geometry+color VAE also converges, and RGB MSE drops substantially from the first epoch. Geometry is slightly worse than the geometry-only baseline, which is expected because the same latent capacity now carries both geometry and appearance. The current color quality is usable as a first fused baseline but not yet final.
+
+### Follow-Up Decision
+
+Keep geometry-only as the clean geometry baseline and use geometry+color as the first fused baseline. Next fused-model experiments should test longer training, larger latent/hidden capacity, and staged RGB weighting so geometry does not regress while color improves.
+
+## EXP-014: RGB VAE Test-Set Surface Export
+
+### Improvement Goal
+
+Export visual PLY reconstructions from the geometry+color VAE on the 20 held-out object-level test samples so predicted RGB point clouds can be compared against the original colored PLY files.
+
+### Scheme Design
+
+Use the RGB VAE checkpoint from EXP-013. Query each object octree node with dense hybrid candidates, keep surface candidates according to predicted UDF, and color each kept point with the model-predicted RGB instead of UDF debug colors.
+
+### Experiment Design
+
+- Checkpoint: `outputs/object_level_geo_rgb_vae_e8/best.pt`.
+- Test set: `data/objaverse_pp_task_relevant_val/ply`.
+- Octree preset: `object`.
+- Points per node: `64`.
+- Candidate queries per node: `512`.
+- Candidate strategy: `hybrid`.
+- Color mode: `predicted-rgb`.
+- First export threshold: `pred_udf < 0.03`.
+- Final visual export threshold: `pred_udf < 0.003`, with `topk_per_node=16` and `topk_max_udf=0.02`.
+
+### Implementation
+
+Updated `scripts/export_octree_vae_surface.py`:
+
+- Added `--octree-preset`.
+- Added `--color-mode predicted-rgb`.
+- Uses `rgb_query_xyz` so RGB prediction is evaluated on the same candidate surface points.
+
+### Results
+
+The loose `pred_udf < 0.03` export kept `14,012,310 / 14,062,080` candidate points, or about `99.6%`. This is too dense for surface visualization and indicates that the RGB VAE UDF output is under-calibrated for naive thresholding.
+
+The stricter export produced:
+
+| Metric | Value |
+|---|---:|
+| Test objects | 20 |
+| Total octree nodes/tokens | 27,465 |
+| Total candidate queries | 14,062,080 |
+| Kept visual points | 4,169,763 |
+
+Local output:
+
+`outputs/object_level_geo_rgb_vae_e8/val20_pred_rgb_surface_hybrid512_udf0003_top16`
+
+### Final Conclusion
+
+The RGB VAE can export colored reconstructions for every held-out object, but the UDF head is not yet well calibrated as a direct surface filter. A stricter threshold plus per-node top-k fallback gives more usable visual PLY files for manual inspection.
+
+### Follow-Up Decision
+
+Use the strict export for visual comparison now. For the next model iteration, add explicit UDF calibration/surface sampling metrics and consider training/exporting with a surface-focused query distribution.
+
+## EXP-015: Low-Point Voxel Pruning
+
+### Improvement Goal
+
+Remove unreliable low-point voxels before they become octree tokens, and ensure parent `child_mask` flags exactly match the materialized child node list.
+
+### Scheme Design
+
+Move sparse voxel pruning into octree construction instead of only filtering after tokenization:
+
+- Stop subdivision when a node has fewer than `10` points.
+- When splitting a parent, drop any child with fewer than `4` points.
+- Recompute the parent `child_mask` only from children that survive this pruning.
+- Keep `--min-node-points` as an extra train/eval/export filter for explicit leaf-token experiments.
+
+### Experiment Design
+
+- Dataset: 20 held-out task-relevant Objaverse++ object PLY files.
+- Octree preset: `object`.
+- BBox export: leaf-only and occupied-only.
+- Reconstruction export: RGB VAE checkpoint, leaf-only, `min_node_points=4`, `512` hybrid candidates per node, `pred_udf < 0.003`, `topk_per_node=16`.
+- Verification: remote full unittest suite.
+
+### Implementation
+
+Updated:
+
+- `OctreeBuildConfig.min_points_per_leaf`
+- `OctreeBuildConfig.with_default_object_semantics()` defaults:
+  - `min_points_per_node=10`
+  - `min_points_per_leaf=4`
+- `build_instance_octree()` now prunes children with fewer than `min_points_per_leaf` points before setting parent `child_mask`.
+- VAE train/eval/export scripts now expose `--min-node-points`.
+- Added tests for low-count split stopping, object preset defaults, and child-mask pruning consistency.
+
+### Results
+
+Tests:
+
+| Check | Result |
+|---|---:|
+| Remote targeted unittest | `13` tests OK |
+| Remote full unittest | `47` tests OK |
+
+Leaf occupied bbox comparison:
+
+| Export | Leaf Occupied Nodes |
+|---|---:|
+| Before construct-time child pruning | 22,098 |
+| After construct-time child pruning | 21,417 |
+
+New local bbox output:
+
+`outputs/object_level_geo_rgb_vae_e8/val20_octree_leaf_occupied_minleaf4_node_bboxes`
+
+New local RGB reconstruction output:
+
+`outputs/object_level_geo_rgb_vae_e8/val20_pred_rgb_surface_leaf_minleaf4_hybrid512_udf0003_top16`
+
+Reconstruction export summary:
+
+| Metric | Value |
+|---|---:|
+| Leaf tokens/nodes | 21,417 |
+| Candidate queries | 10,965,504 |
+| Kept visual points | 3,826,501 |
+
+### Final Conclusion
+
+The sparse voxel handling now happens at the structural octree level. Low-count children are no longer silently removed after tokenization, so parent `child_mask` and the actual node list remain consistent. This also reduces unreliable leaf tokens and candidate reconstruction points.
+
+### Follow-Up Decision
+
+Use construct-time pruning for all object-level runs. Retrain the RGB VAE with `--include-leaf-only --min-node-points 4` so the checkpoint distribution matches the new leaf-token reconstruction path.
+
+## EXP-016: Leaf-Min4 Layered RGB VAE Retraining
+
+### Improvement Goal
+
+Reduce false positive reconstructed points inside leaf voxels by matching the VAE training distribution to the new leaf-only octree token distribution and by adding node-bbox volume/hard query supervision.
+
+### Scheme Design
+
+The previous RGB VAE was trained on all nodes with `uniform` queries sampled around the observed point bbox. Surface export queried the full octree node bbox, creating a distribution mismatch. This experiment retrains with:
+
+- `--include-leaf-only`
+- `--min-node-points 4`
+- object preset with construct-time sparse child pruning
+- `query_strategy=layered`
+- `queries_per_node=128`
+
+### Experiment Design
+
+- Train set: 80 task-relevant Objaverse++ object PLY files.
+- Validation set: 20 held-out object PLY files.
+- Model: RGB-fused VAE, hidden dim `128`, latent dim `64`.
+- Training: 8 epochs, batch size `128`, learning rate `5e-4`.
+- Export: `256` hybrid candidates per leaf node, `pred_udf < 0.003`, `topk_per_node=4`, predicted RGB colors.
+
+### Implementation
+
+No new model architecture was introduced. The experiment uses the new structural pruning and existing layered query sampling, plus the newly exposed `--include-leaf-only` and `--min-node-points` options.
+
+### Results
+
+Checkpoint:
+
+`outputs/object_level_geo_rgb_vae_leaf_min4_layered_e8/best.pt`
+
+Validation metrics:
+
+| Metric | Value |
+|---|---:|
+| sample_count | 21,417 |
+| query_count | 2,741,376 |
+| UDF MAE | 0.005828 |
+| UDF RMSE | 0.009292 |
+| Occupancy accuracy | 0.924896 |
+| RGB MAE | 0.061976 |
+| RGB MSE | 0.010682 |
+| RGB PSNR | 19.71 dB |
+
+Visual export:
+
+`outputs/object_level_geo_rgb_vae_leaf_min4_layered_e8/val20_pred_rgb_surface_leaf_min4_hybrid256_udf0003_top4`
+
+| Export | Kept Points |
+|---|---:|
+| Old leaf/min4 export with old checkpoint | 3,826,501 |
+| New leaf/min4 layered checkpoint export | 88,462 |
+
+Most frames now keep only the top-k fallback points; `pred_udf < 0.003` threshold points are often zero.
+
+### Final Conclusion
+
+Layered training substantially reduces voxel-filling false positives during visual export, but the model is now conservative and UDF scale is not well calibrated for direct thresholding. Visual quality is still limited because the decoder is trained as a per-node field with weak global surface consistency and the export is still candidate-selection based.
+
+### Follow-Up Decision
+
+Next steps should focus on UDF calibration and reconstruction quality rather than more voxel pruning: increase training duration/capacity, add stronger full-node negative supervision, export by calibrated per-node quantile/top-k, and compute visual reconstruction metrics such as Chamfer/F-score before deciding the final surface extraction rule.
+
+## EXP-017: Calibrated Surface Query Supervision
+
+### Improvement Goal
+
+Improve UDF thresholdability so surface reconstruction can use a direct `pred_udf < threshold` rule instead of Top-K or spatial fallback.
+
+### Scheme Design
+
+Add a new `query_strategy=calibrated_surface` with explicit query mixture:
+
+- Covered surface positives from spatially distributed anchors on node points.
+- Near-surface band queries with controlled offsets.
+- Full node-bbox volume negatives.
+- Hard negatives on split planes, node boundaries, and near-surface bands.
+
+This keeps the same VAE architecture and changes only the supervision query distribution.
+
+### Experiment Design
+
+- Data: 80 train / 20 validation task-relevant Objaverse++ object PLY files.
+- Octree: object preset, leaf-only, `min_node_points=4`.
+- Model: RGB-fused VAE, hidden dim `128`, latent dim `64`.
+- Training: 8 epochs, `queries_per_node=128`, `query_strategy=calibrated_surface`.
+- Export: no Top-K fallback, `topk_per_node=0`.
+- Thresholds tested: `0.003`, `0.005`, `0.01`.
+
+### Implementation
+
+Updated `src/threedvae/data/dataset.py` with `build_calibrated_surface_udf_queries()`.
+
+Updated train/eval scripts to accept `calibrated_surface`.
+
+Added a sampling unit test in `tests/test_query_sampling.py`.
+
+### Results
+
+Validation metrics:
+
+| Metric | Value |
+|---|---:|
+| sample_count | 21,417 |
+| query_count | 2,741,376 |
+| UDF MAE | 0.006423 |
+| UDF RMSE | 0.014231 |
+| Occupancy accuracy | 0.956074 |
+| RGB MAE | 0.059363 |
+| RGB MSE | 0.010476 |
+| RGB PSNR | 19.80 dB |
+
+Threshold-only exports:
+
+| Threshold | Top-K | Kept Points | Retention |
+|---:|---:|---:|---:|
+| 0.003 | 0 | 2,536,473 | 23.13% |
+| 0.005 | 0 | 5,589,402 | 50.97% |
+| 0.010 | 0 | 9,194,812 | 83.85% |
+
+Local outputs:
+
+- `outputs/object_level_geo_rgb_vae_leaf_min4_calibrated_e8/val20_pred_rgb_surface_threshold_0p003`
+- `outputs/object_level_geo_rgb_vae_leaf_min4_calibrated_e8/val20_pred_rgb_surface_threshold_0p005`
+- `outputs/object_level_geo_rgb_vae_leaf_min4_calibrated_e8/val20_pred_rgb_surface_threshold_0p01`
+
+### Final Conclusion
+
+The calibrated query supervision makes direct threshold export possible without Top-K. However, `0.005` and especially `0.01` retain too many candidate points and are likely too loose. `0.003` is the most useful first visual candidate, but the high retention rate still suggests that the near-surface/negative separation is not yet sharp enough.
+
+### Follow-Up Decision
+
+Inspect `0.003` visually first. If it still fills volume, increase the volume/hard negative ratio or add distance-bucket weighted UDF loss before changing the decoder architecture.
+
+## EXP-018: Weighted UDF Loss for Near-Surface Reconstruction
+
+### Improvement Goal
+
+Improve direct threshold reconstruction quality after EXP-017 showed that `0.005` was visually thick and partly missing, while looser thresholds became noisy. The goal is to make the decoder predict smaller and better-separated UDF values near real object surfaces.
+
+### Scheme Design
+
+Keep the calibrated surface query distribution, but replace plain Smooth L1 UDF regression with distance-bucket weighted Smooth L1:
+
+- `target_udf < 0.003`: weight `8`
+- `target_udf < 0.01`: weight `4`
+- `target_udf < 0.03`: weight `2`
+- farther queries: weight `1`
+
+Theoretical reason: direct threshold export depends most on ranking and calibration around the near-surface band, not on average accuracy over all node-volume samples. The weighted loss makes near-surface errors more expensive while keeping volume negatives in training.
+
+### Experiment Design
+
+- Data: 80 train / 20 validation task-relevant Objaverse++ object PLY files.
+- Octree: object preset, leaf-only, `min_node_points=4`.
+- Query strategy: `calibrated_surface`.
+- Model: RGB-fused VAE, hidden dim `256`, latent dim `128`.
+- Training: 12 epochs, batch size `96`, `queries_per_node=192`, NPU `npu:8`.
+- Export: threshold-only, no Top-K fallback, `864` hybrid candidates per leaf node.
+- Thresholds tested: `0.005`, `0.006`, `0.007`.
+
+### Implementation
+
+Updated:
+
+- `src/threedvae/train/octree_node_losses.py`
+- `src/threedvae/train/octree_node_trainer.py`
+- `scripts/train_octree_node_vae.py`
+- `scripts/train_octree_node_vqvae.py`
+- `tests/test_octree_node_vae.py`
+
+Added `--udf-loss-mode bucket_weighted_smooth_l1` and bucket weight/threshold CLI options. Added a unit test to confirm the weighted UDF loss prioritizes near-surface errors.
+
+### Results
+
+Checkpoint:
+
+`outputs/object_level_geo_rgb_vae_leaf_min4_calibrated_weighted_h256_l128_e12/best.pt`
+
+Validation metrics:
+
+| Metric | EXP-017 | EXP-018 |
+|---|---:|---:|
+| sample_count | 21,417 | 21,417 |
+| query_count | 2,741,376 | 4,112,064 |
+| UDF MAE | 0.006423 | 0.002895 |
+| UDF RMSE | 0.014231 | 0.006646 |
+| Occupancy accuracy | 0.956074 | 0.967987 |
+| RGB MAE | 0.059363 | 0.050671 |
+| RGB MSE | 0.010476 | 0.008475 |
+| RGB PSNR | 19.80 dB | 20.72 dB |
+
+Threshold-only exports:
+
+| Threshold | Kept Points | Retention |
+|---:|---:|---:|
+| 0.005 | 10,348,867 | 55.93% |
+| 0.006 | 11,269,327 | 60.90% |
+| 0.007 | 11,916,050 | 64.40% |
+
+Local outputs:
+
+- `outputs/object_level_geo_rgb_vae_leaf_min4_calibrated_weighted_h256_l128_e12/val20_pred_rgb_surface_threshold_0p005`
+- `outputs/object_level_geo_rgb_vae_leaf_min4_calibrated_weighted_h256_l128_e12/val20_pred_rgb_surface_threshold_0p006`
+- `outputs/object_level_geo_rgb_vae_leaf_min4_calibrated_weighted_h256_l128_e12/val20_pred_rgb_surface_threshold_0p007`
+
+### Final Conclusion
+
+Weighted UDF loss substantially improves measured UDF and RGB reconstruction on the validation queries. This is theoretically consistent with the goal because the loss now emphasizes the threshold-critical near-surface region. However, the exported point count is much higher than EXP-017 at the same threshold, so visual inspection is still required: lower numerical UDF loss can make more candidates pass the threshold, and that is only useful if the accepted points are actually concentrated on surfaces rather than thickened voxel interiors.
+
+### Follow-Up Decision
+
+Use the new weighted checkpoint as the current best candidate. Compare `0.005 / 0.006 / 0.007` visually. If the surface is still thick, next improve candidate placement and training target sharpness instead of only changing threshold: adaptive candidates by node size, stronger near-zero surface anchor coverage, and optional Chamfer/F-score evaluation against validation points.

@@ -57,6 +57,22 @@ class NodeDatasetTest(unittest.TestCase):
         self.assertEqual(sample["query_rgb_mask"].shape, (4, 1))
         self.assertGreaterEqual(float(sample["query_udf"].min()), 0.0)
 
+    def test_collect_node_samples_can_filter_sparse_nodes(self) -> None:
+        tmp_dir = _fresh_tmp_dir("node_dataset_min_points")
+        try:
+            ply_path = tmp_dir / "frame_0001.ply"
+            ply_path.write_text(_sample_sparse_ply(), encoding="utf-8")
+            samples = collect_node_samples_from_ply_paths(
+                [str(ply_path)],
+                octree_config=OctreeBuildConfig(high_priority_semantics={1}, min_points_per_node=2),
+                min_node_points=4,
+            )
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+        self.assertTrue(samples)
+        self.assertTrue(all(sample.num_points >= 4 for sample in samples))
+
 
 def _sample_ply() -> str:
     return textwrap.dedent(
@@ -81,6 +97,31 @@ def _sample_ply() -> str:
         1 0 1 0 255 0 1 1
         1 1 1 0 255 0 1 1
         0 1 1 0 255 0 1 1
+        """
+    )
+
+
+def _sample_sparse_ply() -> str:
+    return textwrap.dedent(
+        """\
+        ply
+        format ascii 1.0
+        element vertex 6
+        property float x
+        property float y
+        property float z
+        property uchar red
+        property uchar green
+        property uchar blue
+        property int instance
+        property int semantic
+        end_header
+        -1 -1 -1 255 0 0 1 1
+        -1 -1 1 255 0 0 1 1
+        -1 1 -1 255 0 0 1 1
+        -1 1 1 255 0 0 1 1
+        1 1 1 0 255 0 1 1
+        1 1 0.8 0 255 0 1 1
         """
     )
 

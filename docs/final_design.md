@@ -12,6 +12,55 @@
 
 当前默认实现先聚焦单帧路径，优先把单帧场景编码、实例编码、训练和评估链路跑通。
 
+## 1.1 模块边界：3D Tokenizer 与 3D VLM 解耦
+
+系统必须分成两个可插拔的大模块：
+
+- `3D VQVAE / 3D Tokenizer`
+- `3D Understanding-Generation VLM`
+
+二者不能在代码和训练逻辑上绑死。
+
+### 3D Tokenizer 的职责
+
+`3D Tokenizer` 只负责把 3D 输入编码成稳定的结构化 token，并提供可选解码能力：
+
+- 输入：PLY、point cloud、mesh 或后续其他 3D 表示。
+- 输出：scene layer + instance layer + node token。
+- 主码：`main_code` 或后续兼容字段。
+- 可选输出：debug JSON/PLY、compact token、LLM sequence。
+- 可选解码：从 token 重建 UDF、occupancy、surface 或 RGB。
+
+Tokenizer 不应该依赖 Qwen、训练 instruction、驾驶决策头或 VLM 内部格式。
+
+### 3D VLM 的职责
+
+`3D VLM` 只消费 tokenizer 导出的 token API，并在其上学习：
+
+- 3D 空间理解
+- 3D token 生成
+- 文字对齐
+- 驾驶常识
+- 风险判断与规划
+
+VLM 可以使用 Qwen3.5 4B，也可以替换成其他 LLM/VLM。VLM 不应该直接读取 VQVAE encoder hidden state、codebook 内部参数或训练 dataset 内部对象。
+
+### 插拔边界
+
+二者之间唯一稳定契约应是版本化 token schema，例如：
+
+- `scene_tokens_compact_latest.json`
+- `scene_tokens_llm_sequence_latest.json`
+- `scene_token_bundle.json`
+
+后续可以替换任意一侧：
+
+- 换 tokenizer：规则式 octree、VQVAE、扩散 tokenizer、Gaussian tokenizer。
+- 换 VLM：Qwen3.5 4B、Qwen 更大模型、其他多模态 LLM。
+- 换输入源：Bench2Drive、真实车端重建、Objaverse、室内机器人数据。
+
+只要 token schema 兼容，下游任务与上游 tokenizer 就应能独立迭代。
+
 ## 2. 输入定义
 
 当前上游输入固定为单帧 `PLY` 文件。每帧 `PLY` 至少包含以下字段：

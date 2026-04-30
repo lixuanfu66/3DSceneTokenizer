@@ -124,10 +124,15 @@ def build_instance_octree(
         for child_index in _child_indices(complexity.split_flag):
             masked_indices = child_masks[child_index]
             child_indices = point_indices[masked_indices]
-            if child_indices.size == 0:
+            if child_indices.size < config.min_points_per_leaf:
                 continue
             materialized_child_mask |= 1 << _local_child_slot(complexity.split_flag, child_index)
             child_entries.append((child_index, child_indices))
+
+        if not child_entries:
+            node.structure_state = "leaf"
+            node.child_mask = 0
+            return
 
         node.child_mask = int(materialized_child_mask)
         for child_index, child_indices in child_entries:

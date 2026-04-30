@@ -24,6 +24,14 @@ class OctreeNodeTrainerConfig:
     vq_weight: float = 1.0
     occ_target_mode: str = "soft_udf"
     occ_soft_distance: float = 0.03
+    udf_loss_mode: str = "smooth_l1"
+    udf_near_weight: float = 1.0
+    udf_band_weight: float = 1.0
+    udf_mid_weight: float = 1.0
+    udf_far_weight: float = 1.0
+    udf_near_threshold: float = 0.003
+    udf_band_threshold: float = 0.01
+    udf_mid_threshold: float = 0.03
     grad_clip_norm: float | None = 1.0
     num_workers: int = 0
     checkpoint_every: int = 1
@@ -171,6 +179,14 @@ class OctreeNodeTrainer:
             vq_weight=self.config.vq_weight,
             occ_target_mode=self.config.occ_target_mode,
             occ_soft_distance=self.config.occ_soft_distance,
+            udf_loss_mode=self.config.udf_loss_mode,
+            udf_near_weight=self.config.udf_near_weight,
+            udf_band_weight=self.config.udf_band_weight,
+            udf_mid_weight=self.config.udf_mid_weight,
+            udf_far_weight=self.config.udf_far_weight,
+            udf_near_threshold=self.config.udf_near_threshold,
+            udf_band_threshold=self.config.udf_band_threshold,
+            udf_mid_threshold=self.config.udf_mid_threshold,
         )
         if not torch.isfinite(losses.total_loss):
             raise RuntimeError("Encountered non-finite octree node training loss.")
