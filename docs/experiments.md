@@ -1201,3 +1201,123 @@ EMA cb512 improves reconstruction metrics over the standard cb1024 VQVAE: better
 ### Follow-Up Decision
 
 Use EMA cb512 as the stronger VQVAE baseline if visual block artifacts improve. If color patches remain obvious, the next change should be geometry VQ plus continuous/residual RGB decoding, because a single node-level discrete latent is still likely to quantize color too coarsely.
+
+## EXP-021: EMA VQVAE with Codebook Size 256
+
+### Improvement Goal
+
+Test whether the low effective codebook usage in EXP-020 means the codebook should be smaller. If the model only needs about 80-100 effective codes, a `256`-entry EMA codebook might improve utilization and reduce block artifacts without hurting reconstruction too much.
+
+### Scheme Design
+
+Keep the EXP-020 EMA quantizer and training setup, changing only:
+
+- `codebook_size=512` -> `codebook_size=256`
+
+All other settings remain the same: VAE latent initialization, EMA decay `0.99`, commitment cost `0.25`, VQ weight `1.0`, calibrated surface queries, and RGB reconstruction.
+
+### Experiment Design
+
+- Data: 80 train / 20 validation task-relevant Objaverse++ object PLY files.
+- Octree: object preset, leaf-only, `min_node_points=4`.
+- Initialization: EXP-018 RGB VAE checkpoint.
+- Quantizer: EMA VQ, `codebook_size=256`, `ema_decay=0.99`, commitment cost `0.25`.
+- Training: 8 epochs, batch size `96`, `queries_per_node=192`, NPU `npu:8`.
+- Evaluation: validation metrics plus code usage/perplexity.
+
+### Results
+
+Checkpoint:
+
+`outputs/object_level_geo_rgb_vqvae_leaf_min4_calibrated_weighted_ema_cb256_e8/best.pt`
+
+Validation metrics:
+
+| Metric | EMA VQ cb512 | EMA VQ cb256 |
+|---|---:|---:|
+| sample_count | 21,417 | 21,417 |
+| query_count | 4,112,064 | 4,112,064 |
+| UDF MAE | 0.003967 | 0.004492 |
+| UDF RMSE | 0.007997 | 0.009908 |
+| Occupancy accuracy | 0.968290 | 0.965182 |
+| RGB MAE | 0.075320 | 0.080558 |
+| RGB MSE | 0.012294 | 0.013307 |
+| RGB PSNR | 19.10 dB | 18.76 dB |
+| Codebook size | 512 | 256 |
+| Used codes | 151 | 63 |
+| Used code ratio | 29.49% | 24.61% |
+| Code perplexity | 85.63 | 40.63 |
+
+### Final Conclusion
+
+Simply shrinking the EMA codebook to `256` does not improve utilization or reconstruction. Effective code usage drops from perplexity `85.63` to `40.63`, and UDF/RGB metrics also degrade. This suggests the current low utilization is not just caused by an oversized codebook; the encoder/decoder and node-level RGB/geometric coupling are still concentrating samples into a small set of codes.
+
+### Follow-Up Decision
+
+Do not replace the current EMA cb512 baseline with cb256. The next experiment should keep `codebook_size=512` and lower commitment/VQ weights to test whether weaker quantization pressure can recover code diversity without sacrificing reconstruction.
+
+## EXP-022: EMA cb512 with Lower Commitment and VQ Weight
+
+### Improvement Goal
+
+Improve codebook utilization while keeping the stronger EMA cb512 capacity from EXP-020. EXP-021 showed that simply shrinking the codebook to 256 hurts both reconstruction and effective code usage, so this experiment keeps `codebook_size=512` and weakens the quantization constraint.
+
+### Scheme Design
+
+Compare against EXP-020 and change only:
+
+- `commitment_cost=0.25` -> `0.1`
+- `vq_weight=1.0` -> `0.5`
+
+All other key settings remain unchanged: EMA quantizer, `codebook_size=512`, VAE latent initialization, calibrated surface query supervision, and RGB reconstruction.
+
+### Experiment Design
+
+- Data: 80 train / 20 validation task-relevant Objaverse++ object PLY files.
+- Octree: object preset, leaf-only, `min_node_points=4`.
+- Initialization: EXP-018 RGB VAE checkpoint.
+- Quantizer: EMA VQ, `codebook_size=512`, `ema_decay=0.99`, commitment cost `0.1`.
+- VQ loss weight: `0.5`.
+- Training: 8 epochs, batch size `96`, `queries_per_node=192`, NPU `npu:8`.
+- Export: threshold-only, no Top-K fallback, `threshold=0.006`, predicted RGB.
+
+### Results
+
+Checkpoint:
+
+`outputs/object_level_geo_rgb_vqvae_leaf_min4_calibrated_weighted_ema_cb512_c01_vq05_e8/best.pt`
+
+Validation metrics:
+
+| Metric | EMA cb512 c0.25 vq1.0 | EMA cb512 c0.1 vq0.5 |
+|---|---:|---:|
+| sample_count | 21,417 | 21,417 |
+| query_count | 4,112,064 | 4,112,064 |
+| UDF MAE | 0.003967 | 0.003647 |
+| UDF RMSE | 0.007997 | 0.007537 |
+| Occupancy accuracy | 0.968290 | 0.967001 |
+| RGB MAE | 0.075320 | 0.072097 |
+| RGB MSE | 0.012294 | 0.011482 |
+| RGB PSNR | 19.10 dB | 19.40 dB |
+| Codebook size | 512 | 512 |
+| Used codes | 151 | 372 |
+| Used code ratio | 29.49% | 72.66% |
+| Code perplexity | 85.63 | 202.45 |
+
+Threshold-only export:
+
+| Threshold | EMA cb512 c0.25 vq1.0 | EMA cb512 c0.1 vq0.5 |
+|---:|---:|---:|
+| 0.006 kept points | 13,305,063 | 12,872,519 |
+
+Local output:
+
+- `outputs/object_level_geo_rgb_vqvae_leaf_min4_calibrated_weighted_ema_cb512_c01_vq05_e8/val20_pred_rgb_surface_threshold_0p006`
+
+### Final Conclusion
+
+Lowering the commitment cost and VQ weight is clearly beneficial in this setting. It substantially improves codebook usage (`151 -> 372` used codes, perplexity `85.63 -> 202.45`) while also improving UDF RMSE and RGB PSNR. This suggests the previous EMA cb512 model was over-constrained by the quantization loss, causing excessive code concentration.
+
+### Follow-Up Decision
+
+Use `EMA cb512 c0.1 vq0.5` as the current best VQVAE baseline. The next decision should be visual: inspect whether color block artifacts are reduced in the exported PLY. If block artifacts remain despite healthier code usage, the next structural change should be geometry VQ plus continuous/residual RGB decoding.
